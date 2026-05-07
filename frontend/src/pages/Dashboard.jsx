@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api/client'
 
 const now = () => new Date().toISOString().replace('T', ' ').slice(0, 19)
-
 const AWS_EXPIRE = new Date('2026-08-21T00:00:00+07:00')
 
 function useCountdown(target) {
@@ -18,11 +17,52 @@ function useCountdown(target) {
     }
   }
   const [t, setT] = useState(calc)
-  useEffect(() => {
-    const id = setInterval(() => setT(calc()), 1000)
-    return () => clearInterval(id)
-  }, [])
+  useEffect(() => { const id = setInterval(() => setT(calc()), 1000); return () => clearInterval(id) }, [])
   return t
+}
+
+function QuickCapture({ onDone }) {
+  const [mode, setMode] = useState('task')
+  const [val, setVal] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const save = async () => {
+    if (!val.trim() || saving) return
+    setSaving(true)
+    if (mode === 'task') await api.post('/tasks', { title: val, priority: 'medium' })
+    if (mode === 'note') await api.post('/notes', { title: val, content: '' })
+    setVal('')
+    setSaving(false)
+    onDone()
+  }
+
+  return (
+    <div className="card fade-up" style={{ padding: '12px 16px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+        {['task', 'note'].map(m => (
+          <button key={m} onClick={() => setMode(m)} style={{
+            fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase',
+            padding: '3px 10px', borderRadius: '4px', cursor: 'pointer', border: 'none',
+            background: mode === m ? 'var(--accent)' : 'rgba(255,255,255,0.06)',
+            color: mode === m ? '#fff' : 'var(--dim)', fontFamily: 'JetBrains Mono, monospace',
+            transition: 'all 0.15s',
+          }}>{m}</button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input
+          className="input" style={{ flex: 1 }}
+          placeholder={mode === 'task' ? 'quick task...' : 'quick note title...'}
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && save()}
+        />
+        <button className="btn btn-primary" onClick={save} disabled={saving} style={{ padding: '8px 14px' }}>
+          {saving ? '...' : '↑'}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -32,20 +72,18 @@ export default function Dashboard() {
   const nav = useNavigate()
   const cd = useCountdown(AWS_EXPIRE)
 
-  useEffect(() => {
-    Promise.all([
-      api.get('/notes'),
-      api.get('/tasks'),
-      api.get('/links'),
-    ]).then(([n, t, l]) => {
-      setCounts({ notes: n.data.length, tasks: t.data.length, links: l.data.length })
-      setRecent({
-        notes: n.data.slice(0, 3),
-        tasks: t.data.filter(t => t.status !== 'done').slice(0, 3),
-      })
-      setLoading(false)
+  const load = () => Promise.all([
+    api.get('/notes'), api.get('/tasks'), api.get('/links'),
+  ]).then(([n, t, l]) => {
+    setCounts({ notes: n.data.length, tasks: t.data.length, links: l.data.length })
+    setRecent({
+      notes: n.data.slice(0, 3),
+      tasks: t.data.filter(t => t.status !== 'done').slice(0, 3),
     })
-  }, [])
+    setLoading(false)
+  })
+
+  useEffect(() => { load() }, [])
 
   const stats = [
     { label: 'Notes',  value: counts.notes, color: 'var(--accent)',  path: '/notes' },
@@ -57,7 +95,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '20px 16px', maxWidth: '900px' }}>
-      <div className="fade-up" style={{ marginBottom: '32px' }}>
+      <div className="fade-up" style={{ marginBottom: '20px' }}>
         <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
           {now()}
         </div>
@@ -65,6 +103,8 @@ export default function Dashboard() {
           Overview<span style={{ color: 'var(--accent)' }}>.</span>
         </h1>
       </div>
+
+      <QuickCapture onDone={load} />
 
       <div className="fade-up fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
         {stats.map(s => (
@@ -81,7 +121,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="card fade-up fade-up-2" style={{ marginBottom: '32px', padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div className="card fade-up fade-up-2" style={{ marginBottom: '24px', padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: urgency }} />
         <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
           ▸ AWS credit expires — Aug 21, 2026
@@ -107,17 +147,14 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {recent.notes.length === 0 && !loading && (
-            <div style={{ color: 'var(--dim)', fontSize: '12px', padding: '12px', border: '1px dashed var(--border)', borderRadius: '2px' }}>
-              no notes yet
-            </div>
+            <div style={{ color: 'var(--dim)', fontSize: '12px', padding: '12px', border: '1px dashed var(--border)', borderRadius: '2px' }}>no notes yet</div>
           )}
           {recent.notes.map((n, i) => (
             <div key={n.id} className={`card fade-up fade-up-${i + 1}`}
-              style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              onClick={() => nav('/notes')}>
               <span style={{ fontSize: '13px', color: 'var(--text)' }}>{n.title}</span>
-              <span style={{ fontSize: '11px', color: 'var(--dim)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {n.content}
-              </span>
+              <span style={{ fontSize: '11px', color: 'var(--dim)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.content}</span>
             </div>
           ))}
         </div>
@@ -130,13 +167,12 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {recent.tasks.length === 0 && !loading && (
-            <div style={{ color: 'var(--dim)', fontSize: '12px', padding: '12px', border: '1px dashed var(--border)', borderRadius: '2px' }}>
-              no pending tasks
-            </div>
+            <div style={{ color: 'var(--dim)', fontSize: '12px', padding: '12px', border: '1px dashed var(--border)', borderRadius: '2px' }}>no pending tasks</div>
           )}
           {recent.tasks.map((t, i) => (
             <div key={t.id} className={`card fade-up fade-up-${i + 1}`}
-              style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+              onClick={() => nav('/tasks')}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent2)', flexShrink: 0 }} />
               <span style={{ fontSize: '13px', color: 'var(--text)' }}>{t.title}</span>
             </div>

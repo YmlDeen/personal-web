@@ -84,3 +84,5 @@ CREATE TABLE IF NOT EXISTS finance (
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+ALTER TABLE tasks ADD COLUMN repeat TEXT DEFAULT NULL;
