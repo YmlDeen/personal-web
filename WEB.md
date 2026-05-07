@@ -1,4 +1,5 @@
 # WEB.md — Personal Dashboard Map
+# Dashboard: countdown AWS credit + notes + tasks + links
 # v1.1.0 | 2026-05-07
 
 ===============================================
@@ -217,7 +218,7 @@ backup: MEGA sync อัตโนมัติ (~/projects → /vps-backup/projec
 
 helmet      : ✓ (contentSecurityPolicy: false)
 rate limit  : ✓ /auth — 10 req/15min
-CORS        : ✓ origin: http://54.179.174.46:3011
+CORS        : ✓ origin: https://ymldeen.duckdns.org
 JWT_SECRET  : ✓ random 32 bytes (production)
 .env        : ✓ ไม่ขึ้น git
 HTTPS       : ✓ Caddy + Let's Encrypt (ymldeen.duckdns.org)
@@ -226,7 +227,7 @@ HTTPS       : ✓ Caddy + Let's Encrypt (ymldeen.duckdns.org)
 ## TODO
 ===============================================
 - UI redesign (ตอนนี้ดิบมาก)
-- HTTPS / domain
+- HTTPS ✓ done (Caddy + ymldeen.duckdns.org)
 - git pull workflow บน VPS (แทน scp)
 
 ===============================================
