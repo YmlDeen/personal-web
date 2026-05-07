@@ -9,6 +9,7 @@ import Links from './pages/Links'
 import Logs from './pages/Logs'
 import Habits from './pages/Habits'
 import Finance from './pages/Finance'
+import Journal from './pages/Journal'
 import Search from './pages/Search'
 
 function Guard({ children }) {
@@ -24,6 +25,7 @@ const NAV = [
   { to: '/habits',  label: 'Habits',    short: 'HABITS',  key: '05', icon: '◈' },
   { to: '/finance', label: 'Finance',   short: 'FIN',     key: '06', icon: '◫' },
   { to: '/logs',    label: 'Logs',      short: 'LOGS',    key: '07', icon: '◌' },
+  { to: '/journal', label: 'Journal',   short: 'JRNL',    key: '08', icon: '◇' },
 ]
 
 function useIsMobile() {
@@ -159,6 +161,7 @@ export default function App() {
                 <Route path="/habits" element={<Habits />} />
                 <Route path="/finance" element={<Finance />} />
                 <Route path="/logs" element={<Logs />} />
+                <Route path="/journal" element={<Journal />} />
               </Routes>
             </Layout>
           </Guard>
