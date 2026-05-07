@@ -39,3 +39,16 @@ export function refresh(token) {
     throw new Error('invalid refresh token')
   }
 }
+
+export async function changePassword(userId, currentPassword, newPassword) {
+  const db = await getDb()
+  const result = db.exec(`SELECT password FROM users WHERE id = ${userId}`)
+  if (result.length === 0) throw new Error('user not found')
+  const hash = result[0].values[0][0]
+  const ok = await bcrypt.compare(currentPassword, hash)
+  if (!ok) throw new Error('invalid credentials')
+  const newHash = await bcrypt.hash(newPassword, 10)
+  db.run(`UPDATE users SET password = ? WHERE id = ${userId}`, [newHash])
+  saveDb()
+  return { message: 'password changed' }
+}

@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { validate } from '../../middleware/validate.js'
-import { loginSchema, registerSchema } from './auth.schema.js'
-import { login, register, refresh } from './auth.service.js'
+import { loginSchema, registerSchema, changePasswordSchema } from './auth.schema.js'
+import { login, register, refresh, changePassword } from './auth.service.js'
+import { verifyToken } from '../../middleware/auth.js'
 
 const router = Router()
 
@@ -31,6 +32,15 @@ router.post('/refresh', (req, res) => {
     res.json(result)
   } catch (e) {
     res.status(401).json({ error: e.message })
+  }
+})
+
+router.put('/password', verifyToken, validate(changePasswordSchema), async (req, res) => {
+  try {
+    const result = await changePassword(req.user.id, req.body.currentPassword, req.body.newPassword)
+    res.json(result)
+  } catch (e) {
+    res.status(400).json({ error: e.message })
   }
 })
 
