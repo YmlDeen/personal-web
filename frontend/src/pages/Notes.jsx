@@ -1,6 +1,38 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 
+function NoteCard({ n, onEdit, onDel }) {
+  const [expanded, setExpanded] = useState(false)
+  const lines = n.content.split('\n')
+  const preview = lines.slice(0, 2).join('\n')
+  const hasMore = lines.length > 2 || n.content.length > 120
+
+  return (
+    <div className="card fade-up" style={{ padding: '16px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{n.title}</div>
+          <div style={{ fontSize: '12px', color: 'var(--dim)', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+            {expanded ? n.content : preview}
+          </div>
+          {hasMore && (
+            <button
+              onClick={() => setExpanded(e => !e)}
+              style={{ marginTop: '6px', fontSize: '10px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '0.05em' }}
+            >
+              {expanded ? '▴ less' : '▸ more'}
+            </button>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+          <button className="btn btn-ghost" onClick={() => onEdit(n)} style={{ padding: '4px 10px', fontSize: '11px' }}>edit</button>
+          <button className="btn btn-danger" onClick={() => onDel(n.id)}>del</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Notes() {
   const [notes, setNotes] = useState([])
   const [form, setForm] = useState({ title: '', content: '' })
@@ -39,7 +71,6 @@ export default function Notes() {
 
   return (
     <div style={{ padding: '32px', maxWidth: '800px' }}>
-      {/* header */}
       <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
         <div>
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
@@ -54,7 +85,6 @@ export default function Notes() {
         </button>
       </div>
 
-      {/* form */}
       {open && (
         <div className="card fade-up" style={{ padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
@@ -76,16 +106,13 @@ export default function Notes() {
               style={{ resize: 'vertical' }}
             />
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn btn-primary" onClick={save}>
-                {editing ? '↑ update' : '↑ save'}
-              </button>
+              <button className="btn btn-primary" onClick={save}>{editing ? '↑ update' : '↑ save'}</button>
               <button className="btn btn-ghost" onClick={cancel}>cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {notes.length === 0 && (
           <div style={{ color: 'var(--dim)', fontSize: '12px', padding: '24px', border: '1px dashed var(--border)', borderRadius: '2px', textAlign: 'center' }}>
@@ -93,17 +120,8 @@ export default function Notes() {
           </div>
         )}
         {notes.map((n, i) => (
-          <div key={n.id} className={`card fade-up`} style={{ animationDelay: `${i * 0.04}s`, padding: '16px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{n.title}</div>
-                <div style={{ fontSize: '12px', color: 'var(--dim)', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{n.content}</div>
-              </div>
-              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                <button className="btn btn-ghost" onClick={() => edit(n)} style={{ padding: '4px 10px', fontSize: '11px' }}>edit</button>
-                <button className="btn btn-danger" onClick={() => del(n.id)}>del</button>
-              </div>
-            </div>
+          <div key={n.id} style={{ animationDelay: `${i * 0.04}s` }}>
+            <NoteCard n={n} onEdit={edit} onDel={del} />
           </div>
         ))}
       </div>
