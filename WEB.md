@@ -1,33 +1,37 @@
 # WEB.md — Personal Dashboard Map
-# v1.0.0 | 2026-05-07
+# v1.5.0 | 2026-05-07
 
 ===============================================
 ## OVERVIEW
 ===============================================
 
-stack  : Express 5 + React (Vite) + SQLite + JWT
-url    : https://ymldeen.duckdns.org
-user   : yml / admin1234
-pages  : Dashboard · Notes · Tasks · Links · Logs
+stack  : Express 5 + React (Vite) + SQLite (sql.js in-memory) + JWT
+url    : https://ymldeen.duckdns.org:8443
+user   : ymldeen / 319300
+pages  : Dashboard · Notes · Tasks · Links · Habits · Finance · Logs
+repo   : https://github.com/YmlDeen/personal-web (private)
 
 ===============================================
 ## SOURCE OF TRUTH
 ===============================================
 
-Termux เป็น source หลัก — แก้ code ที่นี่เสมอ
-VPS เป็น production — deploy จาก Termux เท่านั้น
+Termux  → แก้ code ที่นี่เสมอ
+GitHub  → single source of truth
+VPS     → production — deploy ผ่าน ./deploy.sh เท่านั้น
 
-⚠ VPS ไม่มี frontend/src/ — มีแค่ dist/ (built)
-⚠ app.js บน VPS ≠ Termux (VPS มี helmet+ratelimit, Termux ยังไม่มี)
-→ TODO: sync app.js Termux ให้ตรงกับ VPS
+workflow:
+  แก้ code (Termux) → ./deploy.sh all → live
 
 ===============================================
 ## FILE STRUCTURE (Termux — source)
 ===============================================
 
 ~/projects/personal-web/
+├── WEB.md
 ├── README.md
-├── frontend/                    ← React source (แก้ที่นี่)
+├── deploy.sh                    ← deploy script ← ใช้นี้เสมอ
+├── .gitignore
+├── frontend/
 │   ├── index.html
 │   ├── vite.config.js
 │   ├── package.json
@@ -36,88 +40,92 @@ VPS เป็น production — deploy จาก Termux เท่านั้น
 │   │   ├── favicon.svg
 │   │   └── icons.svg
 │   └── src/
-│       ├── main.jsx             ← entry point
-│       ├── App.jsx              ← router + layout
+│       ├── main.jsx
+│       ├── App.jsx              ← router + layout (desktop sidebar + mobile nav)
 │       ├── App.css
-│       ├── index.css            ← global styles
+│       ├── index.css            ← global styles — Glassmorphism dark theme
 │       ├── api/
 │       │   └── client.js        ← axios instance + auto-refresh interceptor
 │       ├── hooks/
 │       │   └── useAuth.js       ← zustand auth store
 │       ├── assets/
-│       │   ├── hero.png
-│       │   ├── react.svg
-│       │   └── vite.svg
 │       └── pages/
-│           ├── Login.jsx        ← POST /auth/login
-│           ├── Dashboard.jsx    ← summary cards (notes/tasks/links)
-│           ├── Notes.jsx        ← CRUD notes
-│           ├── Tasks.jsx        ← CRUD tasks + status toggle
-│           ├── Links.jsx        ← CRUD links
-│           └── Logs.jsx         ← read-only timeline
-└── backend/                     ← Express source (แก้ที่นี่)
-    ├── server.js                ← entry — app.listen(:3011)
+│           ├── Login.jsx
+│           ├── Dashboard.jsx
+│           ├── Notes.jsx
+│           ├── Tasks.jsx
+│           ├── Links.jsx
+│           ├── Habits.jsx       ← streak tracker + monthly grid
+│           ├── Finance.jsx      ← income/expense + monthly summary
+│           └── Logs.jsx
+└── backend/
+    ├── server.js
     ├── package.json
+    ├── .env
     ├── data/
-    │   └── app.db               ← SQLite database (Termux copy)
+    │   └── app.db
     └── src/
-        ├── app.js               ← express setup + routes + static serve
+        ├── app.js
         ├── db/
-        │   ├── client.js        ← better-sqlite3 init + migrate
-        │   └── schema.sql       ← tables: users·notes·tasks·links·logs
+        │   ├── client.js        ← sql.js in-memory — โหลดจากไฟล์ตอน start
+        │   └── schema.sql
         ├── middleware/
-        │   ├── auth.js          ← verifyToken (Bearer JWT)
-        │   └── validate.js      ← zod middleware
+        │   ├── auth.js
+        │   └── validate.js
         └── modules/
             ├── auth/
-            │   ├── auth.router.js   ← POST /auth/login, /auth/refresh
-            │   ├── auth.schema.js   ← zod schema
-            │   └── auth.service.js  ← bcryptjs.compare + JWT sign
+            │   ├── auth.router.js
+            │   ├── auth.schema.js
+            │   └── auth.service.js
             ├── notes/
-            │   ├── notes.router.js  ← GET·POST·PUT·DELETE /notes/:id
-            │   ├── notes.schema.js
-            │   └── notes.service.js
             ├── tasks/
-            │   ├── tasks.router.js  ← GET·POST·PUT·DELETE /tasks/:id
-            │   ├── tasks.schema.js
-            │   └── tasks.service.js
             ├── links/
-            │   ├── links.router.js  ← GET·POST·DELETE /links/:id
-            │   ├── links.schema.js
-            │   └── links.service.js
+            ├── habits/          ← ใหม่ 2026-05-07
+            ├── finance/         ← ใหม่ 2026-05-07
             └── logs/
-                ├── logs.router.js   ← GET·POST /logs (append-only)
-                └── logs.service.js
 
 ===============================================
 ## FILE STRUCTURE (VPS — production)
 ===============================================
 
 ~/projects/personal-web/
-├── dist/                        ← frontend built (scp จาก Termux)
-│   ├── index.html
-│   ├── favicon.svg
-│   ├── icons.svg
-│   └── assets/
-│       ├── index-*.js
-│       └── index-*.css
-└── backend/                     ← backend source (scp จาก Termux)
+├── dist/
+└── backend/
     ├── server.js
     ├── package.json
-    ├── reset.mjs                ← ลบได้
-    ├── .env                     ← JWT secrets + DB_PATH (ไม่ขึ้น git)
+    ├── .env                     ← production secrets (ไม่ขึ้น git)
     ├── data/
-    │   └── app.db               ← SQLite database (production)
+    │   └── app.db
     └── src/
-        └── ... (เหมือน Termux แต่ app.js มี helmet+ratelimit)
+
+===============================================
+## DEPLOY
+===============================================
+
+script: ~/projects/personal-web/deploy.sh
+
+  ./deploy.sh all       → build frontend + upload src + git push + restart
+  ./deploy.sh frontend  → build + upload dist + restart
+  ./deploy.sh backend   → upload src + restart
+
+⚠ deploy.sh ต้องรันจาก Termux เท่านั้น
+⚠ รันบน VPS = scp หาตัวเอง พัง
+
+manual:
+  cd frontend && npm run build
+  scp -i ~/.ssh/id_ed25519 -r dist ubuntu@54.179.174.46:~/projects/personal-web/
+  scp -i ~/.ssh/id_ed25519 -r backend/src ubuntu@54.179.174.46:~/projects/personal-web/backend/
+  ssh -i ~/.ssh/id_ed25519 ubuntu@54.179.174.46 "sudo systemctl restart personal-web"
 
 ===============================================
 ## API ROUTES
 ===============================================
 
 GET  /health                     → { status: 'ok' }
-POST /auth/login                 → { accessToken, refreshToken }
-POST /auth/refresh               → { accessToken }
+POST /auth/register              → { access, refresh }   password >= 6 ตัว
+POST /auth/login                 → { access, refresh }
+POST /auth/refresh               → { access }
+PUT  /auth/password              → { message }           ต้อง Bearer token
 
 — ต้อง Authorization: Bearer <token> —
 GET    /notes                    → list
@@ -127,15 +135,28 @@ DELETE /notes/:id                → delete
 
 GET    /tasks                    → list
 POST   /tasks                    → create
-PUT    /tasks/:id                → update (status toggle)
+PUT    /tasks/:id                → update
 DELETE /tasks/:id                → delete
 
 GET    /links                    → list
 POST   /links                    → create
 DELETE /links/:id                → delete
 
+GET    /habits                   → list
+POST   /habits                   → create
+DELETE /habits/:id               → delete
+GET    /habits/logs?year=&month= → logs รายเดือน
+POST   /habits/:id/log           → toggle { date }
+
+GET    /finance?year=&month=     → list รายเดือน
+GET    /finance/summary          → { income, expense, balance }
+POST   /finance                  → create
+DELETE /finance/:id              → delete
+
 GET    /logs                     → list
 POST   /logs                     → append
+
+rate limit: /auth — 10 req / 15 min
 
 ===============================================
 ## ENV FILES
@@ -149,61 +170,123 @@ Termux: ~/projects/personal-web/backend/.env
 
 VPS: ~/projects/personal-web/backend/.env
   PORT=3011
-  JWT_SECRET=d562704f247ec5e86...  (production secret)
-  JWT_REFRESH_SECRET=d93b43487d0...  (production secret)
+  JWT_SECRET=327b95d3108e8ea2bae748b8b004bfbeede1ef77ee5077b5cf364553c5d04703
+  JWT_REFRESH_SECRET=b9ec321da96b962e75cbe0cbde9e5df7e3e35f6327ec47f337a93e560c858687
   DB_PATH=/home/ubuntu/projects/personal-web/backend/data/app.db
 
 ⚠ .env ไม่ขึ้น git เด็ดขาด
+⚠ backup: vault/.env.vps.bak
 
 ===============================================
 ## VPS SERVICE
 ===============================================
 
-systemd  : personal-web.service (enabled — auto-start on reboot)
-tmux     : ไม่ใช้แล้ว (systemd รับช่วงแทน)
-node     : v20.20.1
+systemd : personal-web.service (enabled)
+node    : v20.20.2
+port    : 3011
 
-คำสั่ง VPS:
-  sudo systemctl status personal-web    → เช็คสถานะ
-  sudo systemctl restart personal-web   → restart
-  sudo systemctl stop personal-web      → stop
-  sudo journalctl -u personal-web -f    → log realtime
-  ss -tlnp | grep 3011                  → เช็ค port
-
-===============================================
-## DEPLOY (Termux → VPS)
-===============================================
-
-ทุกครั้งที่แก้ frontend:
-  cd ~/projects/personal-web/frontend
-  npm run build
-  scp -i ~/.ssh/id_ed25519 -r dist ubuntu@54.179.174.46:~/projects/personal-web/
-
-ทุกครั้งที่แก้ backend:
-  scp -i ~/.ssh/id_ed25519 -r backend/src ubuntu@54.179.174.46:~/projects/personal-web/backend/
-  ssh -i ~/.ssh/id_ed25519 ubuntu@54.179.174.46 "sudo systemctl restart personal-web"
+  sudo systemctl status personal-web
+  sudo systemctl restart personal-web
+  sudo systemctl stop personal-web
+  sudo journalctl -u personal-web -f
+  sudo journalctl -u personal-web -n 30 --no-pager
 
 ===============================================
 ## DATABASE
 ===============================================
 
-engine  : SQLite (better-sqlite3 บน Termux, sqlite3 CLI บน VPS)
-tables  : users · notes · tasks · links · logs
+engine  : sql.js (SQLite in-memory)
+tables  : users · notes · tasks · links · habits · habit_logs · finance · logs
 location:
   Termux : ~/projects/personal-web/backend/data/app.db
   VPS    : ~/projects/personal-web/backend/data/app.db
 
-⚠ ห้ามใช้ better-sqlite3 import ใน script บน VPS
-→ ใช้ sqlite3 CLI แทน: sqlite3 ~/projects/personal-web/backend/data/app.db "..."
+⚠ sql.js โหลด DB เข้า memory ตอน start
+⚠ แก้ไฟล์ตรงๆ ด้วย sqlite3 CLI ไม่ sync กับ memory
+⚠ ต้องแก้ผ่าน API เท่านั้น
 
-backup  : MEGA sync อัตโนมัติ (~/projects → /vps-backup/projects)
+reset password (วิธีที่ถูก):
+  TOKEN=$(curl -s -X POST http://localhost:3011/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"username":"ymldeen","password":"OLD"}' \
+    | grep -o '"access":"[^"]*"' | cut -d'"' -f4) \
+  && curl -s -X PUT http://localhost:3011/auth/password \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"currentPassword":"OLD","newPassword":"NEW"}' | cat
+
+ถ้า login ไม่ได้เลย:
+  sqlite3 /home/ubuntu/projects/personal-web/backend/data/app.db "DELETE FROM users;"
+  sudo systemctl restart personal-web
+  curl -s -X POST http://localhost:3011/auth/register \
+    -H "Content-Type: application/json" \
+    -d '{"username":"ymldeen","password":"NEWPASS"}' | cat
+
+backup: MEGA sync (~/projects → /vps-backup/projects)
+
+===============================================
+## SECURITY
+===============================================
+
+helmet      : ✓
+rate limit  : ✓ /auth — 10 req/15min
+CORS        : ✓ origin: https://ymldeen.duckdns.org:8443
+JWT_SECRET  : ✓ random 32 bytes
+.env        : ✓ ไม่ขึ้น git
+HTTPS       : ✓ Caddy reverse proxy :8443
+
+===============================================
+## QUICK REFERENCE
+===============================================
+
+deploy ทั้งหมด (Termux):
+  cd ~/projects/personal-web && ./deploy.sh all
+
+เช็ค live:
+  curl -s http://54.179.174.46:3011/health
+
+log VPS:
+  sudo journalctl -u personal-web -f
+
+ถ้า .env หาย:
+  bring .env.vps.bak --dst ~/projects/personal-web/backend
+  mv ~/projects/personal-web/backend/.env.vps.bak ~/projects/personal-web/backend/.env
+  scp -i ~/.ssh/id_ed25519 ~/projects/personal-web/backend/.env ubuntu@54.179.174.46:~/projects/personal-web/backend/.env
+  ssh -i ~/.ssh/id_ed25519 ubuntu@54.179.174.46 "sudo systemctl restart personal-web"
+
+===============================================
+## KNOWN ISSUES / LESSONS LEARNED
+===============================================
+
+2026-05-07 AUTH_FAILED:
+  root cause : sql.js in-memory ไม่ sync กับ DB file
+  fix        : DELETE FROM users → restart → register ใหม่
+  เพิ่ม      : PUT /auth/password endpoint
+
+2026-05-07 node_modules หลุดเข้า git:
+  root cause : .gitignore ไม่ครอบคลุม subfolder
+  fix        : git rm --cached + git restore + npm install
+  บทเรียน   : deploy.sh รันจาก Termux เท่านั้น
+
+2026-05-07 gsave push rejected ซ้ำ:
+  root cause : VPS และ Termux push แยกกัน remote ahead
+  fix        : เพิ่ม git pull --rebase ใน gsave function
 
 ===============================================
 ## TODO
 ===============================================
-- sync app.js Termux ให้มี helmet + ratelimit เหมือน VPS
-- deploy script อัตโนมัติ (build → scp → restart)
-- push source ขึ้น GitHub (YmlDeen/personal-web)
-- .gitignore: node_modules · .env · data/ · dist/
+- ตรวจ .gitignore ให้ครอบคลุม node_modules ทุก subfolder
+- เช็ค UI glassmorphism บนมือถือจริง
+- git pull workflow บน VPS (แทน scp)
 
 ===============================================
+## CLAUDE WORKFLOW — frontend files
+===============================================
+
+bring <file> --dst ~/projects/personal-web/frontend/src
+bring <page>.jsx --dst ~/projects/personal-web/frontend/src/pages
+
+หลัง bring ครบ:
+  cd ~/projects/personal-web && ./deploy.sh frontend
+
+# v1.5.0 | 2026-05-07
