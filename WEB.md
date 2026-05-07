@@ -6,7 +6,7 @@
 ===============================================
 
 stack  : Express 5 + React (Vite) + SQLite + JWT
-url    : http://54.179.174.46:3011
+url    : https://ymldeen.duckdns.org
 user   : yml / admin1234
 pages  : Dashboard · Notes · Tasks · Links · Logs
 repo   : https://github.com/YmlDeen/personal-web (private)
@@ -220,7 +220,7 @@ rate limit  : ✓ /auth — 10 req/15min
 CORS        : ✓ origin: http://54.179.174.46:3011
 JWT_SECRET  : ✓ random 32 bytes (production)
 .env        : ✓ ไม่ขึ้น git
-HTTPS       : ✗ ยังไม่มี (HTTP only)
+HTTPS       : ✓ Caddy + Let's Encrypt (ymldeen.duckdns.org)
 
 ===============================================
 ## TODO
