@@ -1,5 +1,7 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import { rateLimit } from 'express-rate-limit'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -15,11 +17,14 @@ import { verifyToken } from './middleware/auth.js'
 const app = express()
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-app.use(cors())
+app.use(helmet({ contentSecurityPolicy: false }))
+app.use(cors({ origin: ['http://54.179.174.46:3011'] }))
 app.use(express.json())
 
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, message: { error: 'too many attempts' } })
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
-app.use('/auth', authRouter)
+app.use('/auth', loginLimiter, authRouter)
 app.use('/notes', verifyToken, notesRouter)
 app.use('/tasks', verifyToken, tasksRouter)
 app.use('/links', verifyToken, linksRouter)
