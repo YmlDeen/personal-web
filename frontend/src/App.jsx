@@ -7,6 +7,8 @@ import Notes from './pages/Notes'
 import Tasks from './pages/Tasks'
 import Links from './pages/Links'
 import Logs from './pages/Logs'
+import Habits from './pages/Habits'
+import Finance from './pages/Finance'
 
 function Guard({ children }) {
   const user = useAuth(s => s.user)
@@ -14,11 +16,13 @@ function Guard({ children }) {
 }
 
 const NAV = [
-  { to: '/',      label: 'Dashboard', short: 'HOME',  key: '01', icon: '⌂' },
-  { to: '/notes', label: 'Notes',     short: 'NOTES', key: '02', icon: '◈' },
-  { to: '/tasks', label: 'Tasks',     short: 'TASKS', key: '03', icon: '◉' },
-  { to: '/links', label: 'Links',     short: 'LINKS', key: '04', icon: '◎' },
-  { to: '/logs',  label: 'Logs',      short: 'LOGS',  key: '05', icon: '◌' },
+  { to: '/',        label: 'Dashboard', short: 'HOME',    key: '01', icon: '⌂' },
+  { to: '/notes',   label: 'Notes',     short: 'NOTES',   key: '02', icon: '◈' },
+  { to: '/tasks',   label: 'Tasks',     short: 'TASKS',   key: '03', icon: '◉' },
+  { to: '/links',   label: 'Links',     short: 'LINKS',   key: '04', icon: '◎' },
+  { to: '/habits',  label: 'Habits',    short: 'HABITS',  key: '05', icon: '◈' },
+  { to: '/finance', label: 'Finance',   short: 'FIN',     key: '06', icon: '◫' },
+  { to: '/logs',    label: 'Logs',      short: 'LOGS',    key: '07', icon: '◌' },
 ]
 
 function useIsMobile() {
@@ -32,24 +36,25 @@ function useIsMobile() {
 }
 
 function Layout({ children }) {
-  const logout  = useAuth(s => s.logout)
+  const logout   = useAuth(s => s.logout)
   const isMobile = useIsMobile()
+
+  const mobileNav = [
+    { to: '/',        short: 'HOME',   icon: '⌂' },
+    { to: '/tasks',   short: 'TASKS',  icon: '◉' },
+    { to: '/habits',  short: 'HABITS', icon: '◈' },
+    { to: '/finance', short: 'FIN',    icon: '◫' },
+    { to: '/notes',   short: 'NOTES',  icon: '◈' },
+  ]
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-
       {!isMobile && (
         <aside style={{
-          width: '200px',
-          borderRight: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 0',
-          flexShrink: 0,
-          position: 'fixed',
-          top: 0, left: 0, bottom: 0,
-          background: 'var(--surface)',
-          zIndex: 100,
+          width: '200px', borderRight: '1px solid var(--border)',
+          display: 'flex', flexDirection: 'column', padding: '24px 0',
+          flexShrink: 0, position: 'fixed', top: 0, left: 0, bottom: 0,
+          background: 'var(--surface)', zIndex: 100,
         }}>
           <div style={{ padding: '0 20px 24px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
@@ -59,7 +64,6 @@ function Layout({ children }) {
               personal os
             </div>
           </div>
-
           <nav style={{ flex: 1, padding: '16px 0' }}>
             {NAV.map(n => (
               <NavLink key={n.to} to={n.to} end={n.to === '/'}
@@ -78,7 +82,6 @@ function Layout({ children }) {
               </NavLink>
             ))}
           </nav>
-
           <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
             <button onClick={logout} style={{
               background: 'none', border: 'none', cursor: 'pointer',
@@ -90,27 +93,17 @@ function Layout({ children }) {
         </aside>
       )}
 
-      <main style={{
-        marginLeft: isMobile ? 0 : '200px',
-        flex: 1,
-        minHeight: '100vh',
-        paddingBottom: isMobile ? '60px' : 0,
-      }}>
+      <main style={{ marginLeft: isMobile ? 0 : '200px', flex: 1, minHeight: '100vh', paddingBottom: isMobile ? '60px' : 0 }}>
         {children}
       </main>
 
       {isMobile && (
         <nav style={{
-          position: 'fixed',
-          bottom: 0, left: 0, right: 0,
-          height: '60px',
-          background: 'var(--surface)',
-          borderTop: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'stretch',
-          zIndex: 200,
+          position: 'fixed', bottom: 0, left: 0, right: 0, height: '60px',
+          background: 'var(--surface)', borderTop: '1px solid var(--border)',
+          display: 'flex', alignItems: 'stretch', zIndex: 200,
         }}>
-          {NAV.map(n => (
+          {mobileNav.map(n => (
             <NavLink key={n.to} to={n.to} end={n.to === '/'}
               style={({ isActive }) => ({
                 flex: 1, display: 'flex', flexDirection: 'column',
@@ -139,7 +132,6 @@ function Layout({ children }) {
           </button>
         </nav>
       )}
-
     </div>
   )
 }
@@ -157,6 +149,8 @@ export default function App() {
                 <Route path="/notes" element={<Notes />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/links" element={<Links />} />
+                <Route path="/habits" element={<Habits />} />
+                <Route path="/finance" element={<Finance />} />
                 <Route path="/logs" element={<Logs />} />
               </Routes>
             </Layout>
