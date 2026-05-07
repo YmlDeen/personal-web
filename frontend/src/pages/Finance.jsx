@@ -1,38 +1,58 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
 const CATEGORIES = ['food','transport','shopping','health','entertainment','salary','freelance','other']
 
 export default function Finance() {
   const now = new Date()
-  const [year, setYear]     = useState(now.getFullYear())
-  const [month, setMonth]   = useState(now.getMonth() + 1)
-  const [entries, setEntries] = useState([])
-  const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 })
+  const qc = useQueryClient()
+  const [year, setYear]       = useState(now.getFullYear())
+  const [month, setMonth]     = useState(now.getMonth() + 1)
   const [type, setType]       = useState('expense')
   const [amount, setAmount]   = useState('')
   const [category, setCategory] = useState('other')
   const [note, setNote]       = useState('')
 
-  const load = async () => {
-    const [e, s] = await Promise.all([
-      api.get(`/finance?year=${year}&month=${month}`),
-      api.get(`/finance/summary?year=${year}&month=${month}`)
-    ])
-    setEntries(e.data)
-    setSummary(s.data)
-  }
+  const { data: entries = [] } = useQuery({
+    queryKey: ['finance', year, month],
+    queryFn: () => api.get(`/finance?year=${year}&month=${month}`).then(r => r.data),
+  })
 
-  useEffect(() => { load() }, [year, month])
+  const { data: summary = { income: 0, expense: 0, balance: 0 } } = useQuery({
+    queryKey: ['finance-summary', year, month],
+    queryFn: () => api.get(`/finance/summary?year=${year}&month=${month}`).then(r => r.data),
+  })
 
-  const add = async () => {
+  const addMutation = useMutation({
+    mutationFn: () => api.post('/finance', { type, amount: parseFloat(amount), category, note }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['finance', year, month] })
+      qc.invalidateQueries({ queryKey: ['finance-summary', year, month] })
+      setAmount('')
+      setNote('')
+    },
+  })
+
+  const delMutation = useMutation({
+    mutationFn: (id) => api.delete(`/finance/${id}`),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['finance', year, month] })
+      const prev = qc.getQueryData(['finance', year, month])
+      qc.setQueryData(['finance', year, month], old => old.filter(e => e.id !== id))
+      return { prev }
+    },
+    onError: (_, __, ctx) => qc.setQueryData(['finance', year, month], ctx.prev),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['finance', year, month] })
+      qc.invalidateQueries({ queryKey: ['finance-summary', year, month] })
+    },
+  })
+
+  const add = () => {
     if (!amount || isNaN(amount)) return
-    await api.post('/finance', { type, amount: parseFloat(amount), category, note })
-    setAmount(''); setNote('')
-    load()
+    addMutation.mutate()
   }
-
-  const del = async id => { await api.delete(`/finance/${id}`); load() }
 
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const prevMonth = () => { if (month === 1) { setYear(y => y-1); setMonth(12) } else setMonth(m => m-1) }
@@ -107,7 +127,7 @@ export default function Finance() {
                 <span style={{ fontSize: '13px', fontWeight: 700, color: e.type === 'income' ? '#00C896' : '#E05C5C', fontFamily: 'JetBrains Mono, monospace', minWidth: '80px', textAlign: 'right' }}>
                   {e.type === 'income' ? '+' : '-'}{Number(e.amount).toLocaleString()}
                 </span>
-                <button className="btn btn-danger" onClick={() => del(e.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
+                <button className="btn btn-danger" onClick={() => delMutation.mutate(e.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
               </div>
             ))}
           </div>

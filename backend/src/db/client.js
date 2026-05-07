@@ -1,32 +1,59 @@
-import initSqlJs from 'sql.js'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import dotenv from 'dotenv'
-dotenv.config()
+import { createRequire } from 'module';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DB_PATH = process.env.DB_PATH
-let db
+dotenv.config();
+
+const require = createRequire(import.meta.url);
+const initSqlJs = require('sql.js');
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DB_PATH = process.env.DB_PATH || join(__dirname, '../../../data/app.db');
+
+let db;
 
 export async function getDb() {
-  if (db) return db
-  const SQL = await initSqlJs()
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH)
-    db = new SQL.Database(fileBuffer)
+  if (db) return db;
+  const SQL = await initSqlJs();
+  if (existsSync(DB_PATH)) {
+    const fileBuffer = readFileSync(DB_PATH);
+    db = new SQL.Database(fileBuffer);
   } else {
-    db = new SQL.Database()
+    mkdirSync(dirname(DB_PATH), { recursive: true });
+    db = new SQL.Database();
   }
-  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8')
-  db.run(schema)
-  saveDb()
-  return db
+  saveDb();
+  await runMigrations();
+  return db;
 }
 
 export function saveDb() {
-  if (!db) return
-  const data = db.export()
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
-  fs.writeFileSync(DB_PATH, Buffer.from(data))
+  const data = db.export();
+  writeFileSync(DB_PATH, Buffer.from(data));
 }
+
+async function runMigrations() {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version    TEXT PRIMARY KEY,
+      applied_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  saveDb();
+  const { migrations } = await import('./migrations.js');
+  for (const { version, up } of migrations) {
+    const applied = db.exec(
+      `SELECT version FROM schema_migrations WHERE version = '${version}'`
+    );
+    if (applied.length > 0 && applied[0].values.length > 0) continue;
+    console.log('[migrate] applying ' + version);
+    db.run(up);
+    db.run(`INSERT INTO schema_migrations (version) VALUES ('${version}')`);
+    saveDb();
+    console.log('[migrate] ' + version + ' done');
+  }
+}
+
+export { saveDb as save };

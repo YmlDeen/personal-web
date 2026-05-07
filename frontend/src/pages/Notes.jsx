@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
 function NoteCard({ n, onEdit, onDel }) {
@@ -34,28 +35,44 @@ function NoteCard({ n, onEdit, onDel }) {
 }
 
 export default function Notes() {
-  const [notes, setNotes] = useState([])
+  const qc = useQueryClient()
   const [form, setForm] = useState({ title: '', content: '' })
   const [editing, setEditing] = useState(null)
   const [open, setOpen] = useState(false)
 
-  const load = () => api.get('/notes').then(r => setNotes(r.data))
-  useEffect(() => { load() }, [])
+  const { data: notes = [] } = useQuery({
+    queryKey: ['notes'],
+    queryFn: () => api.get('/notes').then(r => r.data),
+  })
 
-  const save = async () => {
-    if (!form.title.trim() || !form.content.trim()) return
-    if (editing) {
-      await api.put(`/notes/${editing}`, form)
+  const saveMutation = useMutation({
+    mutationFn: () => editing
+      ? api.put(`/notes/${editing}`, form)
+      : api.post('/notes', form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notes'] })
       setEditing(null)
-    } else {
-      await api.post('/notes', form)
-    }
-    setForm({ title: '', content: '' })
-    setOpen(false)
-    load()
-  }
+      setForm({ title: '', content: '' })
+      setOpen(false)
+    },
+  })
 
-  const del = async id => { await api.delete(`/notes/${id}`); load() }
+  const delMutation = useMutation({
+    mutationFn: (id) => api.delete(`/notes/${id}`),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['notes'] })
+      const prev = qc.getQueryData(['notes'])
+      qc.setQueryData(['notes'], old => old.filter(n => n.id !== id))
+      return { prev }
+    },
+    onError: (_, __, ctx) => qc.setQueryData(['notes'], ctx.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['notes'] }),
+  })
+
+  const save = () => {
+    if (!form.title.trim() || !form.content.trim()) return
+    saveMutation.mutate()
+  }
 
   const edit = n => {
     setEditing(n.id)
@@ -121,7 +138,7 @@ export default function Notes() {
         )}
         {notes.map((n, i) => (
           <div key={n.id} style={{ animationDelay: `${i * 0.04}s` }}>
-            <NoteCard n={n} onEdit={edit} onDel={del} />
+            <NoteCard n={n} onEdit={edit} onDel={id => delMutation.mutate(id)} />
           </div>
         ))}
       </div>

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
 const COLORS = ['#7C6AF7','#00C896','#F5A623','#E05C5C','#5CB8E4','#C47AF7']
-const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
 function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate()
@@ -10,37 +10,46 @@ function getDaysInMonth(year, month) {
 
 export default function Habits() {
   const now = new Date()
+  const qc = useQueryClient()
   const [year, setYear]   = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
-  const [habits, setHabits] = useState([])
-  const [logs, setLogs]     = useState([])
-  const [name, setName]     = useState('')
-  const [color, setColor]   = useState(COLORS[0])
+  const [name, setName]   = useState('')
+  const [color, setColor] = useState(COLORS[0])
 
-  const load = async () => {
-    const [h, l] = await Promise.all([
-      api.get('/habits'),
-      api.get(`/habits/logs?year=${year}&month=${month}`)
-    ])
-    setHabits(h.data)
-    setLogs(l.data)
-  }
+  const { data: habits = [] } = useQuery({
+    queryKey: ['habits'],
+    queryFn: () => api.get('/habits').then(r => r.data),
+  })
 
-  useEffect(() => { load() }, [year, month])
+  const { data: logs = [] } = useQuery({
+    queryKey: ['habit-logs', year, month],
+    queryFn: () => api.get(`/habits/logs?year=${year}&month=${month}`).then(r => r.data),
+  })
 
-  const add = async () => {
-    if (!name.trim()) return
-    await api.post('/habits', { name, color })
-    setName('')
-    load()
-  }
+  const addMutation = useMutation({
+    mutationFn: () => api.post('/habits', { name, color }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['habits'] })
+      setName('')
+    },
+  })
 
-  const del = async id => { await api.delete(`/habits/${id}`); load() }
+  const delMutation = useMutation({
+    mutationFn: (id) => api.delete(`/habits/${id}`),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['habits'] })
+      const prev = qc.getQueryData(['habits'])
+      qc.setQueryData(['habits'], old => old.filter(h => h.id !== id))
+      return { prev }
+    },
+    onError: (_, __, ctx) => qc.setQueryData(['habits'], ctx.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['habits'] }),
+  })
 
-  const toggle = async (habitId, date) => {
-    await api.post(`/habits/${habitId}/log`, { date })
-    load()
-  }
+  const toggleMutation = useMutation({
+    mutationFn: ({ habitId, date }) => api.post(`/habits/${habitId}/log`, { date }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['habit-logs', year, month] }),
+  })
 
   const isChecked = (habitId, day) => {
     const date = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`
@@ -48,7 +57,6 @@ export default function Habits() {
   }
 
   const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
-
   const daysInMonth = getDaysInMonth(year, month)
   const today = now.getDate()
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -68,13 +76,13 @@ export default function Habits() {
       </div>
 
       <div className="fade-up fade-up-1" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <input className="input" placeholder="new habit..." value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} style={{ flex: 1, minWidth: '160px' }} />
+        <input className="input" placeholder="new habit..." value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && addMutation.mutate()} style={{ flex: 1, minWidth: '160px' }} />
         <div style={{ display: 'flex', gap: '4px' }}>
           {COLORS.map(c => (
             <div key={c} onClick={() => setColor(c)} style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, cursor: 'pointer', border: color === c ? '2px solid var(--text)' : '2px solid transparent', transition: 'all 0.15s' }} />
           ))}
         </div>
-        <button className="btn btn-primary" onClick={add}>+ add</button>
+        <button className="btn btn-primary" onClick={() => name.trim() && addMutation.mutate()}>+ add</button>
       </div>
 
       <div className="fade-up fade-up-2" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
@@ -106,7 +114,7 @@ export default function Habits() {
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: h.color, flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: '13px', color: 'var(--text)' }}>{h.name}</span>
               {streak > 0 && <span style={{ fontSize: '10px', color: h.color, letterSpacing: '0.05em' }}>🔥 {streak}d</span>}
-              <button className="btn btn-danger" onClick={() => del(h.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
+              <button className="btn btn-danger" onClick={() => delMutation.mutate(h.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
             </div>
             <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {
@@ -114,7 +122,7 @@ export default function Habits() {
                 const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
                 const isToday = dateStr === todayStr
                 return (
-                  <div key={d} onClick={() => toggle(h.id, dateStr)} style={{
+                  <div key={d} onClick={() => toggleMutation.mutate({ habitId: h.id, date: dateStr })} style={{
                     width: '24px', height: '24px', borderRadius: '3px', cursor: 'pointer',
                     background: checked ? h.color : 'var(--surface2, #1a1a2e)',
                     border: isToday ? `1px solid ${h.color}` : '1px solid var(--border)',

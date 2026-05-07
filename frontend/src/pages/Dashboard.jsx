@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
 const now = () => new Date().toISOString().replace('T', ' ').slice(0, 19)
@@ -24,16 +25,20 @@ function useCountdown(target) {
 function QuickCapture({ onDone }) {
   const [mode, setMode] = useState('task')
   const [val, setVal] = useState('')
-  const [saving, setSaving] = useState(false)
 
-  const save = async () => {
-    if (!val.trim() || saving) return
-    setSaving(true)
-    if (mode === 'task') await api.post('/tasks', { title: val, priority: 'medium' })
-    if (mode === 'note') await api.post('/notes', { title: val, content: '' })
-    setVal('')
-    setSaving(false)
-    onDone()
+  const mutation = useMutation({
+    mutationFn: () => mode === 'task'
+      ? api.post('/tasks', { title: val, priority: 'medium' })
+      : api.post('/notes', { title: val, content: '' }),
+    onSuccess: () => {
+      setVal('')
+      onDone()
+    },
+  })
+
+  const save = () => {
+    if (!val.trim() || mutation.isPending) return
+    mutation.mutate()
   }
 
   return (
@@ -57,8 +62,8 @@ function QuickCapture({ onDone }) {
           onChange={e => setVal(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && save()}
         />
-        <button className="btn btn-primary" onClick={save} disabled={saving} style={{ padding: '8px 14px' }}>
-          {saving ? '...' : '↑'}
+        <button className="btn btn-primary" onClick={save} disabled={mutation.isPending} style={{ padding: '8px 14px' }}>
+          {mutation.isPending ? '...' : '↑'}
         </button>
       </div>
     </div>
@@ -66,24 +71,42 @@ function QuickCapture({ onDone }) {
 }
 
 export default function Dashboard() {
-  const [counts, setCounts] = useState({ notes: 0, tasks: 0, links: 0 })
-  const [recent, setRecent] = useState({ notes: [], tasks: [] })
-  const [loading, setLoading] = useState(true)
+  const qc = useQueryClient()
   const nav = useNavigate()
   const cd = useCountdown(AWS_EXPIRE)
 
-  const load = () => Promise.all([
-    api.get('/notes'), api.get('/tasks'), api.get('/links'),
-  ]).then(([n, t, l]) => {
-    setCounts({ notes: n.data.length, tasks: t.data.length, links: l.data.length })
-    setRecent({
-      notes: n.data.slice(0, 3),
-      tasks: t.data.filter(t => t.status !== 'done').slice(0, 3),
-    })
-    setLoading(false)
+  const { data: notesData = [], isLoading: ln } = useQuery({
+    queryKey: ['notes'],
+    queryFn: () => api.get('/notes').then(r => r.data),
   })
 
-  useEffect(() => { load() }, [])
+  const { data: tasksData = [], isLoading: lt } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => api.get('/tasks').then(r => r.data),
+  })
+
+  const { data: linksData = [], isLoading: ll } = useQuery({
+    queryKey: ['links'],
+    queryFn: () => api.get('/links').then(r => r.data),
+  })
+
+  const loading = ln || lt || ll
+
+  const counts = {
+    notes: notesData.length,
+    tasks: tasksData.length,
+    links: linksData.length,
+  }
+
+  const recent = {
+    notes: notesData.slice(0, 3),
+    tasks: tasksData.filter(t => t.status !== 'done').slice(0, 3),
+  }
+
+  const onDone = () => {
+    qc.invalidateQueries({ queryKey: ['tasks'] })
+    qc.invalidateQueries({ queryKey: ['notes'] })
+  }
 
   const stats = [
     { label: 'Notes',  value: counts.notes, color: 'var(--accent)',  path: '/notes' },
@@ -104,7 +127,7 @@ export default function Dashboard() {
         </h1>
       </div>
 
-      <QuickCapture onDone={load} />
+      <QuickCapture onDone={onDone} />
 
       <div className="fade-up fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
         {stats.map(s => (

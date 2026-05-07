@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../api/client'
 
 const PRIORITY = { high: { label: 'high', color: 'var(--danger)' }, medium: { label: 'med', color: 'var(--warn)' }, low: { label: 'low', color: 'var(--dim)' } }
@@ -41,27 +42,52 @@ function TaskRow({ t, onToggle, onDel }) {
 }
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState([])
+  const qc = useQueryClient()
   const [form, setForm] = useState({ title: '', priority: 'medium', due_date: '', repeat: '' })
   const [open, setOpen] = useState(false)
 
-  const load = () => api.get('/tasks').then(r => setTasks(r.data))
-  useEffect(() => { load() }, [])
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => api.get('/tasks').then(r => r.data),
+  })
 
-  const add = async () => {
+  const addMutation = useMutation({
+    mutationFn: (body) => api.post('/tasks', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setForm({ title: '', priority: 'medium', due_date: '', repeat: '' })
+      setOpen(false)
+    },
+  })
+
+  const toggleMutation = useMutation({
+    mutationFn: (t) => api.put(`/tasks/${t.id}`, { status: t.status === 'done' ? 'todo' : 'done' }),
+    onMutate: async (t) => {
+      await qc.cancelQueries({ queryKey: ['tasks'] })
+      const prev = qc.getQueryData(['tasks'])
+      qc.setQueryData(['tasks'], old => old.map(x => x.id === t.id ? { ...x, status: x.status === 'done' ? 'todo' : 'done' } : x))
+      return { prev }
+    },
+    onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+
+  const delMutation = useMutation({
+    mutationFn: (id) => api.delete(`/tasks/${id}`),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['tasks'] })
+      const prev = qc.getQueryData(['tasks'])
+      qc.setQueryData(['tasks'], old => old.filter(x => x.id !== id))
+      return { prev }
+    },
+    onError: (_, __, ctx) => qc.setQueryData(['tasks'], ctx.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+
+  const add = () => {
     if (!form.title.trim()) return
-    await api.post('/tasks', { title: form.title, priority: form.priority, due_date: form.due_date || null, repeat: form.repeat || null })
-    setForm({ title: '', priority: 'medium', due_date: '', repeat: '' })
-    setOpen(false)
-    load()
+    addMutation.mutate({ title: form.title, priority: form.priority, due_date: form.due_date || null, repeat: form.repeat || null })
   }
-
-  const toggle = async t => {
-    await api.put(`/tasks/${t.id}`, { status: t.status === 'done' ? 'todo' : 'done' })
-    load()
-  }
-
-  const del = async id => { await api.delete(`/tasks/${id}`); load() }
 
   const pending = tasks.filter(t => t.status !== 'done').sort((a, b) => {
     const po = priorityOrder(a.priority) - priorityOrder(b.priority)
@@ -121,7 +147,7 @@ export default function Tasks() {
         <div className="fade-up fade-up-2" style={{ marginBottom: '24px' }}>
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>▸ pending</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {pending.map(t => <TaskRow key={t.id} t={t} onToggle={toggle} onDel={del} />)}
+            {pending.map(t => <TaskRow key={t.id} t={t} onToggle={t => toggleMutation.mutate(t)} onDel={id => delMutation.mutate(id)} />)}
           </div>
         </div>
       )}
@@ -130,7 +156,7 @@ export default function Tasks() {
         <div className="fade-up fade-up-3">
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>▸ completed</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {done.map(t => <TaskRow key={t.id} t={t} onToggle={toggle} onDel={del} />)}
+            {done.map(t => <TaskRow key={t.id} t={t} onToggle={t => toggleMutation.mutate(t)} onDel={id => delMutation.mutate(id)} />)}
           </div>
         </div>
       )}
