@@ -97,7 +97,7 @@ export default function Notes() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{n.title}</div>
-                <div style={{ fontSize: '12px', color: 'var(--dim)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{n.content}</div>
+                <div style={{ fontSize: '12px', color: 'var(--dim)', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{n.content}</div>
               </div>
               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                 <button className="btn btn-ghost" onClick={() => edit(n)} style={{ padding: '4px 10px', fontSize: '11px' }}>edit</button>
