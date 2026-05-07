@@ -1,5 +1,5 @@
 # WEB.md — Personal Dashboard Map
-# v1.0.0 | 2026-05-07
+# v1.1.0 | 2026-05-07
 
 ===============================================
 ## OVERVIEW
@@ -9,24 +9,28 @@ stack  : Express 5 + React (Vite) + SQLite + JWT
 url    : http://54.179.174.46:3011
 user   : yml / admin1234
 pages  : Dashboard · Notes · Tasks · Links · Logs
+repo   : https://github.com/YmlDeen/personal-web (private)
 
 ===============================================
 ## SOURCE OF TRUTH
 ===============================================
 
-Termux เป็น source หลัก — แก้ code ที่นี่เสมอ
-VPS เป็น production — deploy จาก Termux เท่านั้น
+Termux  → แก้ code ที่นี่เสมอ
+GitHub  → single source of truth
+VPS     → production — deploy ผ่าน ./deploy.sh เท่านั้น
 
-⚠ VPS ไม่มี frontend/src/ — มีแค่ dist/ (built)
-⚠ app.js บน VPS ≠ Termux (VPS มี helmet+ratelimit, Termux ยังไม่มี)
-→ TODO: sync app.js Termux ให้ตรงกับ VPS
+workflow:
+  แก้ code (Termux) → ./deploy.sh all → live
 
 ===============================================
 ## FILE STRUCTURE (Termux — source)
 ===============================================
 
 ~/projects/personal-web/
+├── WEB.md                       ← map ของ project (ไฟล์นี้)
 ├── README.md
+├── deploy.sh                    ← deploy script ← ใช้นี้เสมอ
+├── .gitignore
 ├── frontend/                    ← React source (แก้ที่นี่)
 │   ├── index.html
 │   ├── vite.config.js
@@ -58,10 +62,11 @@ VPS เป็น production — deploy จาก Termux เท่านั้น
 └── backend/                     ← Express source (แก้ที่นี่)
     ├── server.js                ← entry — app.listen(:3011)
     ├── package.json
+    ├── .env                     ← ไม่ขึ้น git
     ├── data/
-    │   └── app.db               ← SQLite database (Termux copy)
+    │   └── app.db               ← SQLite (Termux local)
     └── src/
-        ├── app.js               ← express setup + routes + static serve
+        ├── app.js               ← express setup + helmet + ratelimit + routes + static
         ├── db/
         │   ├── client.js        ← better-sqlite3 init + migrate
         │   └── schema.sql       ← tables: users·notes·tasks·links·logs
@@ -71,7 +76,7 @@ VPS เป็น production — deploy จาก Termux เท่านั้น
         └── modules/
             ├── auth/
             │   ├── auth.router.js   ← POST /auth/login, /auth/refresh
-            │   ├── auth.schema.js   ← zod schema
+            │   ├── auth.schema.js
             │   └── auth.service.js  ← bcryptjs.compare + JWT sign
             ├── notes/
             │   ├── notes.router.js  ← GET·POST·PUT·DELETE /notes/:id
@@ -94,22 +99,36 @@ VPS เป็น production — deploy จาก Termux เท่านั้น
 ===============================================
 
 ~/projects/personal-web/
-├── dist/                        ← frontend built (scp จาก Termux)
+├── dist/                        ← frontend built (upload ผ่าน deploy.sh)
 │   ├── index.html
 │   ├── favicon.svg
 │   ├── icons.svg
 │   └── assets/
 │       ├── index-*.js
 │       └── index-*.css
-└── backend/                     ← backend source (scp จาก Termux)
+└── backend/
     ├── server.js
     ├── package.json
-    ├── reset.mjs                ← ลบได้
-    ├── .env                     ← JWT secrets + DB_PATH (ไม่ขึ้น git)
+    ├── .env                     ← production secrets (สร้างบน VPS, ไม่ขึ้น git)
     ├── data/
-    │   └── app.db               ← SQLite database (production)
-    └── src/
-        └── ... (เหมือน Termux แต่ app.js มี helmet+ratelimit)
+    │   └── app.db               ← SQLite production
+    └── src/                     ← upload ผ่าน deploy.sh
+
+===============================================
+## DEPLOY
+===============================================
+
+script: ~/projects/personal-web/deploy.sh
+
+  ./deploy.sh all       → build frontend + upload src + git push + restart
+  ./deploy.sh frontend  → build + upload dist + restart
+  ./deploy.sh backend   → upload src + restart
+
+manual (ถ้า script พัง):
+  cd frontend && npm run build
+  scp -i ~/.ssh/id_ed25519 -r dist ubuntu@54.179.174.46:~/projects/personal-web/
+  scp -i ~/.ssh/id_ed25519 -r backend/src ubuntu@54.179.174.46:~/projects/personal-web/backend/
+  ssh -i ~/.ssh/id_ed25519 ubuntu@54.179.174.46 "sudo systemctl restart personal-web"
 
 ===============================================
 ## API ROUTES
@@ -137,6 +156,8 @@ DELETE /links/:id                → delete
 GET    /logs                     → list
 POST   /logs                     → append
 
+rate limit: /auth — 10 req / 15 min
+
 ===============================================
 ## ENV FILES
 ===============================================
@@ -149,8 +170,8 @@ Termux: ~/projects/personal-web/backend/.env
 
 VPS: ~/projects/personal-web/backend/.env
   PORT=3011
-  JWT_SECRET=d562704f247ec5e86...  (production secret)
-  JWT_REFRESH_SECRET=d93b43487d0...  (production secret)
+  JWT_SECRET=d562704f247ec5e86...
+  JWT_REFRESH_SECRET=d93b43487d0...
   DB_PATH=/home/ubuntu/projects/personal-web/backend/data/app.db
 
 ⚠ .env ไม่ขึ้น git เด็ดขาด
@@ -159,51 +180,54 @@ VPS: ~/projects/personal-web/backend/.env
 ## VPS SERVICE
 ===============================================
 
-systemd  : personal-web.service (enabled — auto-start on reboot)
-tmux     : ไม่ใช้แล้ว (systemd รับช่วงแทน)
-node     : v20.20.1
+systemd : personal-web.service (enabled — auto-start on reboot)
+node    : v20.20.2
+port    : 3011
 
-คำสั่ง VPS:
-  sudo systemctl status personal-web    → เช็คสถานะ
-  sudo systemctl restart personal-web   → restart
-  sudo systemctl stop personal-web      → stop
-  sudo journalctl -u personal-web -f    → log realtime
-  ss -tlnp | grep 3011                  → เช็ค port
-
-===============================================
-## DEPLOY (Termux → VPS)
-===============================================
-
-ทุกครั้งที่แก้ frontend:
-  cd ~/projects/personal-web/frontend
-  npm run build
-  scp -i ~/.ssh/id_ed25519 -r dist ubuntu@54.179.174.46:~/projects/personal-web/
-
-ทุกครั้งที่แก้ backend:
-  scp -i ~/.ssh/id_ed25519 -r backend/src ubuntu@54.179.174.46:~/projects/personal-web/backend/
-  ssh -i ~/.ssh/id_ed25519 ubuntu@54.179.174.46 "sudo systemctl restart personal-web"
+คำสั่ง:
+  sudo systemctl status personal-web              → เช็คสถานะ
+  sudo systemctl restart personal-web             → restart
+  sudo systemctl stop personal-web               → stop
+  sudo journalctl -u personal-web -f             → log realtime
+  sudo journalctl -u personal-web -n 30 --no-pager → log ย้อนหลัง
+  ss -tlnp | grep 3011                           → เช็ค port
 
 ===============================================
 ## DATABASE
 ===============================================
 
-engine  : SQLite (better-sqlite3 บน Termux, sqlite3 CLI บน VPS)
+engine  : SQLite
 tables  : users · notes · tasks · links · logs
 location:
   Termux : ~/projects/personal-web/backend/data/app.db
   VPS    : ~/projects/personal-web/backend/data/app.db
 
-⚠ ห้ามใช้ better-sqlite3 import ใน script บน VPS
-→ ใช้ sqlite3 CLI แทน: sqlite3 ~/projects/personal-web/backend/data/app.db "..."
+⚠ ห้ามใช้ better-sqlite3 import ใน script บน VPS (Node 20 ไม่ support)
+→ ใช้ sqlite3 CLI: sqlite3 ~/...app.db "..."
 
-backup  : MEGA sync อัตโนมัติ (~/projects → /vps-backup/projects)
+reset password:
+  node -e "require('bcryptjs').hash('newpass', 10, (e,h) => console.log(h))"
+  sqlite3 ~/...app.db "UPDATE users SET password = 'HASH' WHERE username = 'yml';"
+
+backup: MEGA sync อัตโนมัติ (~/projects → /vps-backup/projects)
+
+===============================================
+## SECURITY
+===============================================
+
+helmet      : ✓ (contentSecurityPolicy: false)
+rate limit  : ✓ /auth — 10 req/15min
+CORS        : ✓ origin: http://54.179.174.46:3011
+JWT_SECRET  : ✓ random 32 bytes (production)
+.env        : ✓ ไม่ขึ้น git
+HTTPS       : ✗ ยังไม่มี (HTTP only)
 
 ===============================================
 ## TODO
 ===============================================
-- sync app.js Termux ให้มี helmet + ratelimit เหมือน VPS
-- deploy script อัตโนมัติ (build → scp → restart)
-- push source ขึ้น GitHub (YmlDeen/personal-web)
-- .gitignore: node_modules · .env · data/ · dist/
+- UI redesign (ตอนนี้ดิบมาก)
+- HTTPS / domain
+- git pull workflow บน VPS (แทน scp)
 
 ===============================================
+# v1.1.0 | 2026-05-07
