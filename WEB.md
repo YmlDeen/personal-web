@@ -8,7 +8,7 @@
 
 stack  : Express 5 + React (Vite) + SQLite + JWT
 url    : https://ymldeen.duckdns.org
-user   : yml / admin1234
+user   : ymldeen / 319300
 pages  : Dashboard · Notes · Tasks · Links · Logs
 repo   : https://github.com/YmlDeen/personal-web (private)
 
