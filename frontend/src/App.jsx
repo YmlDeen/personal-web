@@ -9,6 +9,7 @@ import Links from './pages/Links'
 import Logs from './pages/Logs'
 import Habits from './pages/Habits'
 import Finance from './pages/Finance'
+import Search from './pages/Search'
 
 function Guard({ children }) {
   const user = useAuth(s => s.user)
@@ -38,6 +39,13 @@ function useIsMobile() {
 function Layout({ children }) {
   const logout   = useAuth(s => s.logout)
   const isMobile = useIsMobile()
+  const [showSearch, setShowSearch] = useState(false)
+
+  useEffect(() => {
+    const fn = (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowSearch(s => !s) } }
+    window.addEventListener('keydown', fn)
+    return () => window.removeEventListener('keydown', fn)
+  }, [])
 
   const mobileNav = [
     { to: '/',        short: 'HOME',   icon: '⌂' },
@@ -49,6 +57,8 @@ function Layout({ children }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      {showSearch && <Search onClose={() => setShowSearch(false)} />}
+
       {!isMobile && (
         <aside style={{
           width: '200px', borderRight: '1px solid var(--border)',
@@ -63,6 +73,20 @@ function Layout({ children }) {
             <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>
               personal os
             </div>
+          </div>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+            <button onClick={() => setShowSearch(true)} style={{
+              width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
+              borderRadius: '6px', padding: '7px 10px', color: 'var(--dim)', cursor: 'pointer',
+              fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.05em',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'border-color 0.2s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border2)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
+              <span>⌕ search</span>
+              <span style={{ fontSize: '9px', opacity: 0.5 }}>⌘K</span>
+            </button>
           </div>
           <nav style={{ flex: 1, padding: '16px 0' }}>
             {NAV.map(n => (
@@ -98,37 +122,20 @@ function Layout({ children }) {
       </main>
 
       {isMobile && (
-        <nav style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, height: '60px',
-          background: 'var(--surface)', borderTop: '1px solid var(--border)',
-          display: 'flex', alignItems: 'stretch', zIndex: 200,
-        }}>
+        <nav className="mobile-nav">
           {mobileNav.map(n => (
-            <NavLink key={n.to} to={n.to} end={n.to === '/'}
-              style={({ isActive }) => ({
-                flex: 1, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: '3px',
-                textDecoration: 'none',
-                color: isActive ? 'var(--accent)' : 'var(--dim)',
-                fontSize: '8px', letterSpacing: '0.08em',
-                borderTop: isActive ? '2px solid var(--accent)' : '2px solid transparent',
-                transition: 'all 0.15s',
-              })}
-            >
-              <span style={{ fontSize: '18px', lineHeight: 1 }}>{n.icon}</span>
-              <span style={{ textTransform: 'uppercase' }}>{n.short}</span>
+            <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}>
+              <span className="mobile-nav-icon">{n.icon}</span>
+              <span className="mobile-nav-label">{n.short}</span>
             </NavLink>
           ))}
-          <button onClick={logout} style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: '3px',
-            background: 'none', border: 'none', borderTop: '2px solid transparent',
-            color: 'var(--dim)', cursor: 'pointer',
-            fontSize: '8px', letterSpacing: '0.08em',
-            fontFamily: 'JetBrains Mono, monospace',
-          }}>
-            <span style={{ fontSize: '18px', lineHeight: 1 }}>⏻</span>
-            <span style={{ textTransform: 'uppercase' }}>OUT</span>
+          <button className="mobile-nav-item mobile-nav-logout" onClick={() => setShowSearch(true)}>
+            <span className="mobile-nav-icon">⌕</span>
+            <span className="mobile-nav-label">SEARCH</span>
+          </button>
+          <button className="mobile-nav-item mobile-nav-logout" onClick={logout}>
+            <span className="mobile-nav-icon">⏻</span>
+            <span className="mobile-nav-label">OUT</span>
           </button>
         </nav>
       )}
