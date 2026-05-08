@@ -10,6 +10,7 @@ import Logs from './pages/Logs'
 import Habits from './pages/Habits'
 import Finance from './pages/Finance'
 import Journal from './pages/Journal'
+import Card from './pages/Card'
 import Search from './pages/Search'
 
 function Guard({ children }) {
@@ -162,6 +163,7 @@ export default function App() {
                 <Route path="/finance" element={<Finance />} />
                 <Route path="/logs" element={<Logs />} />
                 <Route path="/journal" element={<Journal />} />
+                <Route path="/card" element={<Card />} />
               </Routes>
             </Layout>
           </Guard>
