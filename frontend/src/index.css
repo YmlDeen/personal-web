@@ -344,3 +344,8 @@ select.input option {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
   margin: 16px 0;
 }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
