@@ -14,7 +14,6 @@ import linksRouter from './modules/links/links.router.js'
 import logsRouter from './modules/logs/logs.router.js'
 import habitsRouter from './modules/habits/habits.router.js'
 import financeRouter from './modules/finance/finance.router.js'
-import relationshipsRouter from './modules/relationships/relationships.router.js'
 import { verifyToken } from './middleware/auth.js'
 
 const app = express()
@@ -27,14 +26,13 @@ app.use(express.json())
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, message: { error: 'too many attempts' } })
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
-app.use('/auth', loginLimiter, authRouter)
-app.use('/notes', verifyToken, notesRouter)
-app.use('/tasks', verifyToken, tasksRouter)
-app.use('/links', verifyToken, linksRouter)
-app.use('/logs', verifyToken, logsRouter)
-app.use('/habits', verifyToken, habitsRouter)
-app.use('/finance', verifyToken, financeRouter)
-app.use('/relationships', verifyToken, relationshipsRouter)
+app.use('/api/auth', loginLimiter, authRouter)
+app.use('/api/notes', verifyToken, notesRouter)
+app.use('/api/tasks', verifyToken, tasksRouter)
+app.use('/api/links', verifyToken, linksRouter)
+app.use('/api/logs', verifyToken, logsRouter)
+app.use('/api/habits', verifyToken, habitsRouter)
+app.use('/api/finance', verifyToken, financeRouter)
 
 const dist = join(__dirname, '../../dist')
 app.use(express.static(dist))

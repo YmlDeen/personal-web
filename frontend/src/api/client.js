@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/' })
+const api = axios.create({ baseURL: '/api' })
 
 api.interceptors.request.use(cfg => {
   const token = localStorage.getItem('access_token')
@@ -28,7 +28,7 @@ api.interceptors.response.use(
       refreshing = true
       try {
         const refresh = localStorage.getItem('refresh_token')
-        const { data } = await axios.post('/auth/refresh', { token: refresh })
+        const { data } = await axios.post('/api/auth/refresh', { token: refresh })
         localStorage.setItem('access_token', data.access)
         queue.forEach(p => p.resolve(data.access))
         queue = []
