@@ -20,7 +20,8 @@ function Guard({ children }) {
 
 const NAV = [
   { to: '/',        label: 'Home',    icon: '⌂',  key: '01' },
-  { to: '/tasks',   label: 'Tasks',   icon: '◉',  key: '02' },
+  { to: '/', label: 'Home', icon: '⌂', color: 'var(--accent)' },
+    { to: '/tasks',   label: 'Tasks',   icon: '◉',  key: '02' },
   { to: '/notes',   label: 'Notes',   icon: '◈',  key: '03' },
   { to: '/habits',  label: 'Habits',  icon: '◆',  key: '04' },
   { to: '/journal', label: 'Journal', icon: '◇',  key: '05' },
@@ -45,6 +46,7 @@ function FABMenu({ onSearch }) {
   const logout = useAuth(s => s.logout)
 
   const items = [
+    { to: '/', label: 'Home', icon: '⌂', color: 'var(--accent)' },
     { to: '/tasks',   label: 'Tasks',   icon: '◉', color: 'var(--accent2)' },
     { to: '/notes',   label: 'Notes',   icon: '◈', color: 'var(--accent)' },
     { to: '/habits',  label: 'Habits',  icon: '◆', color: 'var(--success)' },
