@@ -44,7 +44,7 @@ export default function Card() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
             <div>
               <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '2px' }}>
-                personal os
+                // runs on mobile, ships to prod
               </div>
               <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.15)', letterSpacing: '-0.01em' }}>
                 yml<span style={{ color: 'var(--accent)' }}>.</span>space
@@ -64,7 +64,7 @@ export default function Card() {
             <h1 style={{
               fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 800,
               color: '#f0f0fa', letterSpacing: '-0.03em', lineHeight: 1, margin: 0,
-            }}>YmlDeen</h1>
+            }}>ym//een</h1>
           </div>
           <p style={{
             fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal',

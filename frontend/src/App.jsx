@@ -153,9 +153,9 @@ function Layout({ children }) {
         }}>
           <div style={{ padding: '0 20px 24px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-              yml<span style={{ color: 'var(--accent)' }}>.</span>space
+              ym//<span style={{ color: 'var(--accent)' }}>een</span>
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>personal os</div>
+            <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>// runs on mobile, ships to prod</div>
           </div>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
             <button onClick={() => setShowSearch(true)} style={{
