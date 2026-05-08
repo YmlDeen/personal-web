@@ -57,7 +57,7 @@ function FABMenu({ onSearch }) {
 
   // place items in circle
   const count = items.length
-  const radius = 110
+  const radius = 95
 
   return (
     <>
@@ -70,7 +70,7 @@ function FABMenu({ onSearch }) {
 
       <div style={{ position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)', zIndex: 300 }}>
         {items.map((item, i) => {
-          const angle = (360 / count) * i - 90
+          const angle = (180 / (count - 1)) * i + 180
           const rad = (angle * Math.PI) / 180
           const x = Math.cos(rad) * radius
           const y = Math.sin(rad) * radius
