@@ -67,7 +67,8 @@ export default function Card() {
             }}>YmlDeen</h1>
           </div>
           <p style={{
-            fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic',
+            fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal',
+            fontFamily: 'Syne, sans-serif',
             lineHeight: 1.5, marginBottom: '28px',
           }}>
             Builder · Tinkerer · Island-based dev.<br />
