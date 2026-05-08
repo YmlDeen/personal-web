@@ -53,7 +53,7 @@ function Layout({ children }) {
     { to: '/',        short: 'HOME',   icon: '⌂' },
     { to: '/tasks',   short: 'TASKS',  icon: '◉' },
     { to: '/habits',  short: 'HABITS', icon: '◈' },
-    { to: '/finance', short: 'FIN',    icon: '◫' },
+    { to: '/journal', short: 'JRNL',   icon: '◇' },
     { to: '/notes',   short: 'NOTES',  icon: '◈' },
   ]
 
