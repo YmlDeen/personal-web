@@ -65,6 +65,7 @@ router.get('/', async (req, res) => {
     })
 
     const aiData = await response.json()
+    console.error("AI RAW:", JSON.stringify(aiData).slice(0,500))
     const brief = aiData.content?.[0]?.text ?? 'ไม่สามารถสร้าง brief ได้'
 
     res.json({ brief, snapshot, generated_at: new Date().toISOString() })
