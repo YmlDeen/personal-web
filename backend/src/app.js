@@ -14,6 +14,7 @@ import linksRouter from './modules/links/links.router.js'
 import logsRouter from './modules/logs/logs.router.js'
 import habitsRouter from './modules/habits/habits.router.js'
 import financeRouter from './modules/finance/finance.router.js'
+import briefRouter from './modules/brief/brief.router.js'
 import { verifyToken } from './middleware/auth.js'
 
 const app = express()
@@ -33,6 +34,7 @@ app.use('/api/links', verifyToken, linksRouter)
 app.use('/api/logs', verifyToken, logsRouter)
 app.use('/api/habits', verifyToken, habitsRouter)
 app.use('/api/finance', verifyToken, financeRouter)
+app.use('/api/brief', verifyToken, briefRouter)
 
 const dist = join(__dirname, '../../dist')
 app.use(express.static(dist))

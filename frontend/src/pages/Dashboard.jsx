@@ -54,11 +54,21 @@ function QuickCapture({ onDone }) {
 }
 
 export default function Dashboard() {
+  const [brief, setBrief] = useState(null)
+  const [briefLoading, setBriefLoading] = useState(true)
   const [data, setData] = useState({ notes:0, tasks:0, links:0, todayTasks:[], habits:[], habitLogs:[] })
   const [loading, setLoading] = useState(true)
   const nav = useNavigate()
   const cd = useCountdown(AWS_EXPIRE)
   const clock = useClock()
+
+  const loadBrief = async () => {
+    try {
+      const r = await api.get("/brief")
+      setBrief(r.data)
+    } catch {}
+    setBriefLoading(false)
+  }
 
   const load = async () => {
     const today = todayStr()
@@ -80,7 +90,7 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadBrief() }, [])
 
   const urgency = cd.days < 30 ? 'var(--danger)' : cd.days < 60 ? 'var(--warn)' : 'var(--dim)'
   const pct = Math.max(0, Math.min(100, (cd.days / 365) * 100))
@@ -190,7 +200,19 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="fade-up fade-up-5">
+      <div className="card fade-up fade-up-5" style={{ padding:'14px 16px', borderLeft:'2px solid var(--accent)', position:'relative', overflow:'hidden' }}>
+        <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span>✦ daily brief</span>
+          <span onClick={loadBrief} style={{ cursor:'pointer', color:'var(--accent)', fontSize:'11px' }}>{briefLoading ? '...' : '↺'}</span>
+        </div>
+        {briefLoading ? (
+          <div style={{ height:'40px', background:'rgba(124,106,247,0.06)', borderRadius:'4px', animation:'pulse 1.5s infinite' }} />
+        ) : (
+          <p style={{ margin:0, fontSize:'13px', color:'var(--text)', lineHeight:1.6, fontStyle:'italic' }}>{brief?.brief ?? 'ไม่มีข้อมูลเพียงพอ'}</p>
+        )}
+      </div>
+
+      <div className="fade-up fade-up-6">
         <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'6px' }}>▸ capture</div>
         <QuickCapture onDone={load} />
       </div>
