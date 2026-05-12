@@ -20,6 +20,31 @@ function useClock() {
   return t
 }
 
+function NmCard({ children, style = {}, onClick, className = '' }) {
+  const [pressed, setPressed] = useState(false)
+  return (
+    <div
+      onClick={onClick}
+      onPointerDown={() => onClick && setPressed(true)}
+      onPointerUp={() => setPressed(false)}
+      onPointerLeave={() => setPressed(false)}
+      className={className}
+      style={{
+        background: 'var(--nm-bg)',
+        boxShadow: pressed ? 'var(--nm-inset)' : 'var(--nm-raised)',
+        borderRadius: '16px',
+        border: 'none',
+        padding: '14px 16px',
+        transition: 'box-shadow 0.15s ease',
+        cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function QuickCapture({ onDone }) {
   const [mode, setMode] = useState('task')
   const [val, setVal] = useState('')
@@ -32,24 +57,44 @@ function QuickCapture({ onDone }) {
     setVal(''); setSaving(false); onDone()
   }
   return (
-    <div className="card" style={{ padding: '12px 14px' }}>
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-        {['task','note'].map(m => (
+    <NmCard style={{ padding: '14px 16px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        {['task', 'note'].map(m => (
           <button key={m} onClick={() => setMode(m)} style={{
-            fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase',
-            padding: '3px 10px', borderRadius: '4px', cursor: 'pointer', border: 'none',
-            background: mode===m ? 'var(--accent)' : 'rgba(255,255,255,0.06)',
-            color: mode===m ? '#fff' : 'var(--dim)', fontFamily: 'JetBrains Mono, monospace',
+            background: 'var(--nm-bg)',
+            boxShadow: mode === m ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
+            border: 'none', borderRadius: '50px',
+            fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
+            padding: '5px 14px', cursor: 'pointer',
+            fontFamily: 'var(--nm-mono)', fontWeight: 700,
+            color: mode === m ? 'var(--nm-accent)' : 'var(--nm-dim)',
+            transition: 'all 0.2s',
           }}>{m}</button>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <input className="input" style={{ flex:1, fontSize:'12px', padding:'8px 12px' }}
-          placeholder={mode==='task' ? 'quick task...' : 'quick note...'}
-          value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => e.key==='Enter' && save()} />
-        <button className="btn btn-primary" onClick={save} disabled={saving} style={{ padding:'8px 14px' }}>{saving ? '...' : '↑'}</button>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <input
+          style={{
+            flex: 1, background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset)',
+            borderRadius: '12px', border: 'none', outline: 'none',
+            fontSize: '13px', padding: '10px 14px',
+            color: 'var(--nm-text)', fontFamily: 'var(--nm-font)', fontWeight: 600,
+          }}
+          placeholder={mode === 'task' ? 'quick task...' : 'quick note...'}
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && save()}
+        />
+        <button onClick={save} disabled={saving} style={{
+          width: '40px', height: '40px', background: 'var(--nm-bg)',
+          boxShadow: saving ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
+          border: 'none', borderRadius: '50%', cursor: 'pointer',
+          fontSize: '16px', color: 'var(--nm-accent)', fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          transition: 'box-shadow 0.15s',
+        }}>{saving ? '·' : '↑'}</button>
       </div>
-    </div>
+    </NmCard>
   )
 }
 
@@ -63,10 +108,7 @@ export default function Dashboard() {
   const clock = useClock()
 
   const loadBrief = async () => {
-    try {
-      const r = await api.get("/brief")
-      setBrief(r.data)
-    } catch {}
+    try { const r = await api.get('/brief'); setBrief(r.data) } catch {}
     setBriefLoading(false)
   }
 
@@ -92,7 +134,7 @@ export default function Dashboard() {
 
   useEffect(() => { load(); loadBrief() }, [])
 
-  const urgency = cd.days < 30 ? 'var(--danger)' : cd.days < 60 ? 'var(--warn)' : 'var(--dim)'
+  const urgency = cd.days < 30 ? 'var(--nm-danger)' : cd.days < 60 ? 'var(--nm-warn)' : 'var(--nm-dim)'
   const pct = Math.max(0, Math.min(100, (cd.days / 365) * 100))
 
   const toggleHabit = async (habit) => {
@@ -103,72 +145,76 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ padding:'16px', maxWidth:'600px', display:'flex', flexDirection:'column', gap:'12px' }}>
+    <div style={{ padding: '20px 16px 80px', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '100vh' }}>
 
-      <div className="fade-up" style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '4px 2px' }}>
         <div>
-          <div style={{ fontSize:'10px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase' }}>{GREET()}</div>
-          <h1 style={{ fontFamily:'Syne, sans-serif', fontSize:'26px', fontWeight:800, color:'var(--text)', letterSpacing:'-0.02em', margin:'2px 0 0' }}>
-            Overview<span style={{ color:'var(--accent)' }}>.</span>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>{GREET()}</div>
+          <h1 style={{ fontFamily: 'var(--nm-font)', fontSize: '28px', fontWeight: 900, color: 'var(--nm-text)', letterSpacing: '-0.02em', margin: 0 }}>
+            Overview<span style={{ color: 'var(--nm-accent)' }}>.</span>
           </h1>
         </div>
-        <div style={{ textAlign:'right' }}>
-          <div style={{ fontFamily:'Syne, sans-serif', fontSize:'22px', fontWeight:700, color:'var(--text)', lineHeight:1 }}>{clock}</div>
-          <div style={{ fontSize:'10px', color:'var(--dim)', marginTop:'2px' }}>{todayStr()}</div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '24px', fontWeight: 500, color: 'var(--nm-text)', lineHeight: 1 }}>{clock}</div>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.1em', marginTop: '4px' }}>{todayStr()}</div>
         </div>
       </div>
 
-      <div className="fade-up fade-up-1" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'8px' }}>
+      <div className="fade-up fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
         {[
-          { label:'Notes',  value:data.notes, color:'var(--accent)',  path:'/notes' },
-          { label:'Tasks',  value:data.tasks, color:'var(--accent2)', path:'/tasks' },
-          { label:'Links',  value:data.links, color:'var(--warn)',     path:'/links' },
+          { label: 'Notes',  value: data.notes, color: 'var(--nm-accent)',  path: '/notes' },
+          { label: 'Tasks',  value: data.tasks, color: 'var(--nm-accent2)', path: '/tasks' },
+          { label: 'Links',  value: data.links, color: 'var(--nm-warn)',    path: '/links' },
         ].map(s => (
-          <div key={s.label} className="card" onClick={() => nav(s.path)}
-            style={{ padding:'12px 14px', cursor:'pointer', position:'relative', overflow:'hidden' }}>
-            <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:s.color }} />
-            <div style={{ fontSize:'24px', fontWeight:700, color:s.color, lineHeight:1, fontFamily:'Syne, sans-serif' }}>
-              {loading ? '—' : String(s.value).padStart(2,'0')}
+          <NmCard key={s.label} onClick={() => nav(s.path)} style={{ padding: '16px 14px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '30px', fontWeight: 500, color: s.color, lineHeight: 1, marginBottom: '6px' }}>
+              {loading ? '—' : String(s.value).padStart(2, '0')}
             </div>
-            <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.08em', textTransform:'uppercase', marginTop:'4px' }}>{s.label}</div>
-          </div>
+            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{s.label}</div>
+          </NmCard>
         ))}
       </div>
 
-      <div className="card fade-up fade-up-2" style={{ padding:'10px 14px' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
-          <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.08em', textTransform:'uppercase' }}>AWS credit · Aug 21, 2026</div>
-          <div style={{ display:'flex', gap:'8px' }}>
+      <NmCard className="fade-up fade-up-2" style={{ padding: '14px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>AWS credit · Aug 21, 2026</div>
+          <div style={{ display: 'flex', gap: '10px' }}>
             {[['d',cd.days],['h',cd.hours],['m',cd.mins],['s',cd.secs]].map(([l,v]) => (
-              <span key={l} style={{ fontSize:'11px', color:urgency, fontFamily:'Syne, sans-serif', fontWeight:700 }}>
-                {String(v).padStart(2,'0')}<span style={{ fontSize:'9px', color:'var(--dim)', marginLeft:'1px' }}>{l}</span>
+              <span key={l} style={{ fontFamily: 'var(--nm-mono)', fontSize: '13px', fontWeight: 500, color: urgency }}>
+                {String(v).padStart(2,'0')}<span style={{ fontSize: '9px', color: 'var(--nm-dim)', marginLeft: '2px' }}>{l}</span>
               </span>
             ))}
           </div>
         </div>
-        <div style={{ height:'2px', background:'var(--border)', borderRadius:'1px' }}>
-          <div style={{ height:'100%', width:`${pct}%`, background:urgency, borderRadius:'1px', transition:'width 1s' }} />
+        <div style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '50px', height: '8px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${urgency}88, ${urgency})`, borderRadius: '50px', transition: 'width 1s ease' }} />
         </div>
-      </div>
+      </NmCard>
 
       <div className="fade-up fade-up-3">
-        <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'6px', display:'flex', justifyContent:'space-between' }}>
-          <span>▸ today's tasks</span>
-          <span onClick={() => nav('/tasks')} style={{ cursor:'pointer', color:'var(--accent)' }}>all →</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>▸ today's tasks</div>
+          <span onClick={() => nav('/tasks')} style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-accent)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>all →</span>
         </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {data.todayTasks.length === 0 && !loading && (
-            <div className="card" style={{ padding:'12px 14px', color:'var(--dim)', fontSize:'12px', textAlign:'center' }}>all clear ✓</div>
+            <NmCard style={{ textAlign: 'center', color: 'var(--nm-dim)', fontSize: '13px', padding: '16px', fontWeight: 600 }}>all clear ✓</NmCard>
           )}
           {data.todayTasks.map(t => {
             const overdue = t.due_date && t.due_date < todayStr()
+            const dotColor = overdue ? 'var(--nm-danger)' : t.priority==='high' ? 'var(--nm-danger)' : t.priority==='medium' ? 'var(--nm-warn)' : 'var(--nm-dim)'
             return (
-              <div key={t.id} className="card" style={{ padding:'10px 14px', display:'flex', alignItems:'center', gap:'10px' }}>
-                <div style={{ width:'6px', height:'6px', borderRadius:'50%', flexShrink:0,
-                  background: overdue ? 'var(--danger)' : t.priority==='high' ? 'var(--danger)' : t.priority==='medium' ? 'var(--warn)' : 'var(--dim)' }} />
-                <span style={{ flex:1, fontSize:'13px', color:'var(--text)', overflowWrap:'anywhere' }}>{t.title}</span>
-                {overdue && <span style={{ fontSize:'9px', color:'var(--danger)' }}>overdue</span>}
-              </div>
+              <NmCard key={t.id} style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
+                  background: 'var(--nm-bg)',
+                  boxShadow: `2px 2px 5px var(--nm-shadow-d), -2px -2px 5px var(--nm-shadow-l), inset 0 0 0 3px ${dotColor}`,
+                }} />
+                <span style={{ flex: 1, fontSize: '13px', color: 'var(--nm-text)', fontWeight: 600, overflowWrap: 'anywhere' }}>{t.title}</span>
+                {overdue && (
+                  <span style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '50px', fontSize: '8px', fontFamily: 'var(--nm-mono)', color: 'var(--nm-danger)', padding: '3px 8px', letterSpacing: '0.08em' }}>overdue</span>
+                )}
+              </NmCard>
             )
           })}
         </div>
@@ -176,23 +222,26 @@ export default function Dashboard() {
 
       {data.habits.length > 0 && (
         <div className="fade-up fade-up-4">
-          <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'6px', display:'flex', justifyContent:'space-between' }}>
-            <span>▸ habits today</span>
-            <span onClick={() => nav('/habits')} style={{ cursor:'pointer', color:'var(--accent)' }}>all →</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>▸ habits today</div>
+            <span onClick={() => nav('/habits')} style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-accent)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>all →</span>
           </div>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {data.habits.map(h => {
               const done = data.habitLogs.some(l => l.habit_id === h.id)
               return (
                 <button key={h.id} onClick={() => toggleHabit(h)} style={{
-                  padding:'6px 12px', borderRadius:'20px', cursor: done ? 'default' : 'pointer',
-                  border:`1px solid ${done ? h.color : 'var(--border)'}`,
-                  background: done ? `${h.color}22` : 'transparent',
-                  color: done ? h.color : 'var(--dim)', fontSize:'11px',
-                  fontFamily:'JetBrains Mono, monospace', transition:'all 0.2s',
-                  display:'flex', alignItems:'center', gap:'5px',
+                  background: 'var(--nm-bg)',
+                  boxShadow: done ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
+                  border: 'none', borderRadius: '50px',
+                  padding: '7px 16px', cursor: done ? 'default' : 'pointer',
+                  fontSize: '12px', fontFamily: 'var(--nm-font)', fontWeight: 700,
+                  color: done ? h.color : 'var(--nm-dim)',
+                  transition: 'all 0.25s ease',
+                  display: 'flex', alignItems: 'center', gap: '6px',
                 }}>
-                  <span>{done ? '✓' : '○'}</span><span>{h.name}</span>
+                  <span style={{ fontSize: '13px' }}>{done ? '✓' : '○'}</span>
+                  <span>{h.name}</span>
                 </button>
               )
             })}
@@ -200,20 +249,22 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="card fade-up fade-up-5" style={{ padding:'14px 16px', borderLeft:'2px solid var(--accent)', position:'relative', overflow:'hidden' }}>
-        <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span>✦ daily brief</span>
-          <span onClick={loadBrief} style={{ cursor:'pointer', color:'var(--accent)', fontSize:'11px' }}>{briefLoading ? '...' : '↺'}</span>
+      <NmCard className="fade-up fade-up-5" style={{ padding: '16px 18px', borderLeft: '3px solid var(--nm-accent)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>✦ daily brief</div>
+          <span onClick={loadBrief} style={{ fontFamily: 'var(--nm-mono)', fontSize: '14px', color: 'var(--nm-accent)', cursor: 'pointer' }}>{briefLoading ? '·' : '↺'}</span>
         </div>
         {briefLoading ? (
-          <div style={{ height:'40px', background:'rgba(124,106,247,0.06)', borderRadius:'4px', animation:'pulse 1.5s infinite' }} />
+          <div style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '8px', height: '40px', animation: 'nmPulse 1.5s infinite' }} />
         ) : (
-          <p style={{ margin:0, fontSize:'13px', color:'var(--text)', lineHeight:1.6, fontStyle:'italic' }}>{brief?.brief ?? 'ไม่มีข้อมูลเพียงพอ'}</p>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--nm-text)', lineHeight: 1.7, fontStyle: 'italic', fontWeight: 600 }}>
+            {brief?.brief ?? 'ไม่มีข้อมูลเพียงพอ'}
+          </p>
         )}
-      </div>
+      </NmCard>
 
       <div className="fade-up fade-up-6">
-        <div style={{ fontSize:'9px', color:'var(--dim)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:'6px' }}>▸ capture</div>
+        <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>▸ capture</div>
         <QuickCapture onDone={load} />
       </div>
 
