@@ -38,11 +38,7 @@ router.get('/', async (req, res) => {
 
     const snapshot = {
       date: today,
-      tasks: {
-        overdue: overdue.map(t => t.title),
-        dueToday: dueToday.map(t => t.title),
-        totalPending: tasks.length
-      },
+      tasks: { overdue: overdue.map(t => t.title), dueToday: dueToday.map(t => t.title), totalPending: tasks.length },
       habits: { missed: missedHabits, doneCount, totalCount: habits.length },
       finance: { income, expense, balance: income - expense },
       recentNotes: notes
@@ -54,11 +50,11 @@ router.get('/', async (req, res) => {
 
 ข้อมูล: ${JSON.stringify(snapshot)}`
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic/claude-haiku-4-5',
         max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -66,7 +62,7 @@ router.get('/', async (req, res) => {
 
     const aiData = await response.json()
     console.error("AI RAW:", JSON.stringify(aiData).slice(0,500))
-    const brief = aiData.content?.[0]?.text ?? 'ไม่สามารถสร้าง brief ได้'
+    const brief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
 
     res.json({ brief, snapshot, generated_at: new Date().toISOString() })
   } catch (err) {
