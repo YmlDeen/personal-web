@@ -88,5 +88,17 @@ export const migrations = [
         UNIQUE(source_type, source_id, target_type, target_id)
       );
     `
+  },
+
+  {
+    version: '003_links_upgrade',
+    up: `
+      ALTER TABLE links ADD COLUMN description TEXT DEFAULT '';
+      ALTER TABLE links ADD COLUMN category    TEXT DEFAULT 'Other';
+      ALTER TABLE links ADD COLUMN favicon     TEXT DEFAULT '';
+      ALTER TABLE links ADD COLUMN image       TEXT DEFAULT '';
+      ALTER TABLE links ADD COLUMN favorite    INTEGER DEFAULT 0;
+    `
   }
+
 ];
