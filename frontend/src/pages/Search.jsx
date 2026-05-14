@@ -42,7 +42,7 @@ export default function Search({ onClose }) {
         <div style={{ position: 'relative', marginBottom: '16px' }}>
           <input
             autoFocus
-            className="input"
+            className="nm-input"
             placeholder="search notes, tasks, links..."
             value={q}
             onChange={e => search(e.target.value)}
@@ -58,7 +58,7 @@ export default function Search({ onClose }) {
         {loading && <div style={{ textAlign: 'center', color: 'var(--dim)', fontSize: '12px', padding: '24px' }}>searching...</div>}
 
         {results && !loading && (
-          <div className="card" style={{ padding: '8px', maxHeight: '60vh', overflowY: 'auto' }}>
+          <div className="nm-card" style={{ padding: '8px', maxHeight: '60vh', overflowY: 'auto' }}>
             {total === 0 && (
               <div style={{ padding: '24px', textAlign: 'center', color: 'var(--dim)', fontSize: '12px' }}>no results for "{q}"</div>
             )}

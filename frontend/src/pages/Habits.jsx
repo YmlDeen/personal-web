@@ -76,21 +76,21 @@ export default function Habits() {
       </div>
 
       <div className="fade-up fade-up-1" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <input className="input" placeholder="new habit..." value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && addMutation.mutate()} style={{ flex: 1, minWidth: '160px' }} />
+        <input className="nm-input" placeholder="new habit..." value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && addMutation.mutate()} style={{ flex: 1, minWidth: '160px' }} />
         <div style={{ display: 'flex', gap: '4px' }}>
           {COLORS.map(c => (
             <div key={c} onClick={() => setColor(c)} style={{ width: '20px', height: '20px', borderRadius: '50%', background: c, cursor: 'pointer', border: color === c ? '2px solid var(--text)' : '2px solid transparent', transition: 'all 0.15s' }} />
           ))}
         </div>
-        <button className="btn btn-primary" onClick={() => name.trim() && addMutation.mutate()}>+ add</button>
+        <button className="nm-btn btn-primary" onClick={() => name.trim() && addMutation.mutate()}>+ add</button>
       </div>
 
       <div className="fade-up fade-up-2" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-        <button className="btn" onClick={prevMonth} style={{ padding: '4px 10px' }}>‹</button>
+        <button className="nm-btn" onClick={prevMonth} style={{ padding: '4px 10px' }}>‹</button>
         <span style={{ fontSize: '13px', color: 'var(--text)', letterSpacing: '0.05em', minWidth: '80px', textAlign: 'center' }}>
           {monthNames[month-1]} {year}
         </span>
-        <button className="btn" onClick={nextMonth} style={{ padding: '4px 10px' }}>›</button>
+        <button className="nm-btn" onClick={nextMonth} style={{ padding: '4px 10px' }}>›</button>
       </div>
 
       {habits.length === 0 && (
@@ -114,7 +114,7 @@ export default function Habits() {
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: h.color, flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: '13px', color: 'var(--text)' }}>{h.name}</span>
               {streak > 0 && <span style={{ fontSize: '10px', color: h.color, letterSpacing: '0.05em' }}>🔥 {streak}d</span>}
-              <button className="btn btn-danger" onClick={() => delMutation.mutate(h.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
+              <button className="nm-btn btn-danger" onClick={() => delMutation.mutate(h.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
             </div>
             <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(d => {

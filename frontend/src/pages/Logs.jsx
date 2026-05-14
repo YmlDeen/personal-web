@@ -35,14 +35,14 @@ export default function Logs() {
       {/* input */}
       <div className="fade-up fade-up-1" style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
         <input
-          className="input"
+          className="nm-input"
           placeholder="log entry..."
           value={msg}
           onChange={e => setMsg(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && add()}
           style={{ flex: 1 }}
         />
-        <button className="btn btn-primary" onClick={add}>+ log</button>
+        <button className="nm-btn btn-primary" onClick={add}>+ log</button>
       </div>
 
       {/* timeline */}

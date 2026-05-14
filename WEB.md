@@ -6,7 +6,7 @@
 ===============================================
 
 stack  : Express 5 + React (Vite) + SQLite (sql.js) + JWT
-url    : https://ymldeen.duckdns.org:8443
+url    : https://ymldeen.duckdns.org:8443 ✓ PWA
 user   : yml / admin1234
 pages  : Dashboard · Notes · Tasks · Links · Habits · Finance · Logs · Journal
 repo   : https://github.com/YmlDeen/personal-web (private)

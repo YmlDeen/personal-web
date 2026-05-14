@@ -49,7 +49,7 @@ export default function Journal() {
         </h1>
       </div>
 
-      <div className="card fade-up fade-up-1" style={{ padding: '16px', marginBottom: '24px' }}>
+      <div className="nm-card fade-up fade-up-1" style={{ padding: '16px', marginBottom: '24px' }}>
         <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>▸ today</div>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           {MOODS.map(m => (
@@ -63,10 +63,10 @@ export default function Journal() {
             {['', 'rough', 'meh', 'okay', 'good', 'great'][form.mood]}
           </span>
         </div>
-        <textarea className="input" placeholder="what's on your mind..." rows={4}
+        <textarea className="nm-input" placeholder="what's on your mind..." rows={4}
           value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
           style={{ width: '100%', resize: 'vertical', marginBottom: '8px' }} />
-        <button className="btn btn-primary" onClick={save} disabled={saving}>
+        <button className="nm-btn btn-primary" onClick={save} disabled={saving}>
           {saving ? '...' : '↑ save entry'}
         </button>
       </div>
@@ -80,7 +80,7 @@ export default function Journal() {
         {entries.map((e, i) => {
           const d = parseDetail(e.detail)
           return (
-            <div key={e.id} className="card fade-up" style={{ animationDelay: `${i * 0.04}s`, padding: '14px 16px' }}>
+            <div key={e.id} className="nm-card fade-up" style={{ animationDelay: `${i * 0.04}s`, padding: '14px 16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <span style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.06em' }}>{d.date || e.created_at?.slice(0, 10)}</span>
                 <span style={{ fontSize: '16px', color: moodColor(d.mood) }}>◆</span>

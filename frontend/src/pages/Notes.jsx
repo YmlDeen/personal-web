@@ -9,7 +9,7 @@ function NoteCard({ n, onEdit, onDel }) {
   const hasMore = lines.length > 2 || n.content.length > 120
 
   return (
-    <div className="card fade-up" style={{ padding: '16px 20px' }}>
+    <div className="nm-card fade-up" style={{ padding: '16px 20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{n.title}</div>
@@ -26,8 +26,8 @@ function NoteCard({ n, onEdit, onDel }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-          <button className="btn btn-ghost" onClick={() => onEdit(n)} style={{ padding: '4px 10px', fontSize: '11px' }}>edit</button>
-          <button className="btn btn-danger" onClick={() => onDel(n.id)}>del</button>
+          <button className="nm-btn btn-ghost" onClick={() => onEdit(n)} style={{ padding: '4px 10px', fontSize: '11px' }}>edit</button>
+          <button className="nm-btn btn-danger" onClick={() => onDel(n.id)}>del</button>
         </div>
       </div>
     </div>
@@ -97,25 +97,25 @@ export default function Notes() {
             Notes<span style={{ color: 'var(--accent)' }}>.</span>
           </h1>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(o => !o)}>
+        <button className="nm-btn btn-primary" onClick={() => setOpen(o => !o)}>
           {open ? '✕ close' : '+ new note'}
         </button>
       </div>
 
       {open && (
-        <div className="card fade-up" style={{ padding: '20px', marginBottom: '20px' }}>
+        <div className="nm-card fade-up" style={{ padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
             ▸ {editing ? 'editing note' : 'new note'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input
-              className="input"
+              className="nm-input"
               placeholder="title"
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             />
             <textarea
-              className="input"
+              className="nm-input"
               placeholder="content..."
               rows={4}
               value={form.content}
@@ -123,8 +123,8 @@ export default function Notes() {
               style={{ resize: 'vertical' }}
             />
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn btn-primary" onClick={save}>{editing ? '↑ update' : '↑ save'}</button>
-              <button className="btn btn-ghost" onClick={cancel}>cancel</button>
+              <button className="nm-btn btn-primary" onClick={save}>{editing ? '↑ update' : '↑ save'}</button>
+              <button className="nm-btn btn-ghost" onClick={cancel}>cancel</button>
             </div>
           </div>
         </div>

@@ -42,15 +42,15 @@ export default function Links() {
         </h1>
       </div>
 
-      <div className="card fade-up fade-up-1" style={{ padding: '16px', marginBottom: '16px' }}>
+      <div className="nm-card fade-up fade-up-1" style={{ padding: '16px', marginBottom: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <input className="input" placeholder="title (optional)" value={form.title}
+          <input className="nm-input" placeholder="title (optional)" value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
           <div style={{ display: 'flex', gap: '8px' }}>
-            <input className="input" placeholder="https://..." value={form.url}
+            <input className="nm-input" placeholder="https://..." value={form.url}
               onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && add()} style={{ flex: 1 }} />
-            <button className="btn btn-primary" onClick={add}>+ save</button>
+            <button className="nm-btn btn-primary" onClick={add}>+ save</button>
           </div>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {PRESET_TAGS.map(tag => (
@@ -99,7 +99,7 @@ export default function Links() {
         {filtered.map((l, i) => {
           const tags = parseTags(l.tags)
           return (
-            <div key={l.id} className="card fade-up" style={{ animationDelay: `${i * 0.04}s`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div key={l.id} className="nm-card fade-up" style={{ animationDelay: `${i * 0.04}s`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '2px', background: 'var(--muted)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -118,7 +118,7 @@ export default function Links() {
                   ))}
                 </div>
               </div>
-              <button className="btn btn-danger" onClick={() => del(l.id)}>del</button>
+              <button className="nm-btn btn-danger" onClick={() => del(l.id)}>del</button>
             </div>
           )
         })}

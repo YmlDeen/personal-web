@@ -70,11 +70,11 @@ export default function Finance() {
       </div>
 
       <div className="fade-up fade-up-1" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-        <button className="btn" onClick={prevMonth} style={{ padding: '4px 10px' }}>‹</button>
+        <button className="nm-btn" onClick={prevMonth} style={{ padding: '4px 10px' }}>‹</button>
         <span style={{ fontSize: '13px', color: 'var(--text)', letterSpacing: '0.05em', minWidth: '80px', textAlign: 'center' }}>
           {monthNames[month-1]} {year}
         </span>
-        <button className="btn" onClick={nextMonth} style={{ padding: '4px 10px' }}>›</button>
+        <button className="nm-btn" onClick={nextMonth} style={{ padding: '4px 10px' }}>›</button>
       </div>
 
       <div className="fade-up fade-up-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '24px' }}>
@@ -83,7 +83,7 @@ export default function Finance() {
           { label: 'EXPENSE', value: summary.expense, color: '#E05C5C' },
           { label: 'BALANCE', value: summary.balance, color: summary.balance >= 0 ? '#00C896' : '#E05C5C' },
         ].map(c => (
-          <div key={c.label} className="card" style={{ padding: '16px', textAlign: 'center' }}>
+          <div key={c.label} className="nm-card" style={{ padding: '16px', textAlign: 'center' }}>
             <div style={{ fontSize: '9px', color: 'var(--dim)', letterSpacing: '0.1em', marginBottom: '6px' }}>{c.label}</div>
             <div style={{ fontSize: '18px', fontWeight: 700, color: c.color, fontFamily: 'JetBrains Mono, monospace' }}>
               {summary.balance < 0 && c.label === 'BALANCE' ? '-' : ''}{Math.abs(c.value).toLocaleString()}
@@ -95,7 +95,7 @@ export default function Finance() {
       <div className="fade-up fade-up-3 card" style={{ padding: '16px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           {['expense','income'].map(t => (
-            <button key={t} onClick={() => setType(t)} className="btn" style={{
+            <button key={t} onClick={() => setType(t)} className="nm-btn" style={{
               background: type === t ? (t === 'income' ? '#00C896' : '#E05C5C') : 'transparent',
               color: type === t ? '#000' : 'var(--dim)', fontSize: '11px', padding: '4px 12px',
               border: `1px solid ${t === 'income' ? '#00C896' : '#E05C5C'}`
@@ -103,12 +103,12 @@ export default function Finance() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <input className="input" placeholder="amount" value={amount} onChange={e => setAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} style={{ width: '100px' }} type="number" />
-          <select className="input" value={category} onChange={e => setCategory(e.target.value)} style={{ flex: 1 }}>
+          <input className="nm-input" placeholder="amount" value={amount} onChange={e => setAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} style={{ width: '100px' }} type="number" />
+          <select className="nm-input" value={category} onChange={e => setCategory(e.target.value)} style={{ flex: 1 }}>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <input className="input" placeholder="note (optional)" value={note} onChange={e => setNote(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} style={{ flex: 2 }} />
-          <button className="btn btn-primary" onClick={add}>+ add</button>
+          <input className="nm-input" placeholder="note (optional)" value={note} onChange={e => setNote(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} style={{ flex: 2 }} />
+          <button className="nm-btn btn-primary" onClick={add}>+ add</button>
         </div>
       </div>
 
@@ -120,14 +120,14 @@ export default function Finance() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {entries.map((e, i) => (
-              <div key={e.id} className="card" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '12px', animationDelay: `${i * 0.03}s` }}>
+              <div key={e.id} className="nm-card" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '12px', animationDelay: `${i * 0.03}s` }}>
                 <span style={{ fontSize: '10px', color: 'var(--dim)', minWidth: '60px' }}>{e.date}</span>
                 <span style={{ fontSize: '10px', color: 'var(--dim)', minWidth: '70px' }}>{e.category}</span>
                 <span style={{ flex: 1, fontSize: '12px', color: 'var(--dim)' }}>{e.note || '—'}</span>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: e.type === 'income' ? '#00C896' : '#E05C5C', fontFamily: 'JetBrains Mono, monospace', minWidth: '80px', textAlign: 'right' }}>
                   {e.type === 'income' ? '+' : '-'}{Number(e.amount).toLocaleString()}
                 </span>
-                <button className="btn btn-danger" onClick={() => delMutation.mutate(e.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
+                <button className="nm-btn btn-danger" onClick={() => delMutation.mutate(e.id)} style={{ fontSize: '10px', padding: '2px 8px' }}>del</button>
               </div>
             ))}
           </div>
