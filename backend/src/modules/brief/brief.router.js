@@ -50,18 +50,20 @@ router.get('/', async (req, res) => {
 
 ข้อมูล: ${JSON.stringify(snapshot)}`
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://play.knplabai.com/ai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.KNPLAB_API_KEY}`
+      },
       body: JSON.stringify({
-        model: 'anthropic/claude-haiku-4-5',
+        model: 'gpt-4o-mini',
         max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       })
     })
 
     const aiData = await response.json()
-    console.error("AI RAW:", JSON.stringify(aiData).slice(0,500))
     const brief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
 
     res.json({ brief, snapshot, generated_at: new Date().toISOString() })
