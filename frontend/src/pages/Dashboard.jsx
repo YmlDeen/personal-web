@@ -542,7 +542,7 @@ export default function Dashboard() {
             margin: 0, fontSize: '13px', color: 'var(--nm-text)',
             lineHeight: 1.7, fontFamily: 'var(--nm-mono)', fontStyle: 'normal', fontWeight: 400,
           }}>
-            {dangerouslySetInnerHTML={{__html: (brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").replace(/\n/g, "<br/>")}}> style={{display:"block"}}>{line}</span>)}
+            <div dangerouslySetInnerHTML={{__html: (brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").replace(/\n/g, "<br/>")}} />
           </div>
         )}
       </NmCard>
