@@ -5,18 +5,36 @@ import api from '../api/client'
 const todayStr = () => new Date().toISOString().split('T')[0]
 const timeStr = () => new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
 const AWS_EXPIRE = new Date('2026-08-21T00:00:00+07:00')
-const GREET = () => { const h = new Date().getHours(); return h < 12 ? 'good morning' : h < 17 ? 'good afternoon' : 'good evening' }
+const GREET = () => {
+  const h = new Date().getHours()
+  return h < 12 ? 'good morning' : h < 17 ? 'good afternoon' : 'good evening'
+}
 
 function useCountdown(target) {
-  const calc = () => { const d = target - Date.now(); if (d <= 0) return { days:0,hours:0,mins:0,secs:0 }; return { days:Math.floor(d/86400000), hours:Math.floor((d%86400000)/3600000), mins:Math.floor((d%3600000)/60000), secs:Math.floor((d%60000)/1000) } }
+  const calc = () => {
+    const d = target - Date.now()
+    if (d <= 0) return { days: 0, hours: 0, mins: 0, secs: 0 }
+    return {
+      days: Math.floor(d / 86400000),
+      hours: Math.floor((d % 86400000) / 3600000),
+      mins: Math.floor((d % 3600000) / 60000),
+      secs: Math.floor((d % 60000) / 1000),
+    }
+  }
   const [t, setT] = useState(calc)
-  useEffect(() => { const id = setInterval(() => setT(calc()), 1000); return () => clearInterval(id) }, [])
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000)
+    return () => clearInterval(id)
+  }, [])
   return t
 }
 
 function useClock() {
   const [t, setT] = useState(timeStr())
-  useEffect(() => { const id = setInterval(() => setT(timeStr()), 1000); return () => clearInterval(id) }, [])
+  useEffect(() => {
+    const id = setInterval(() => setT(timeStr()), 1000)
+    return () => clearInterval(id)
+  }, [])
   return t
 }
 
@@ -115,13 +133,17 @@ function QuickCapture({ onDone, disabled }) {
   const [mode, setMode] = useState('task')
   const [val, setVal] = useState('')
   const [saving, setSaving] = useState(false)
+
   const save = async () => {
     if (!val.trim() || saving || disabled) return
     setSaving(true)
     if (mode === 'task') await api.post('/tasks', { title: val, priority: 'medium' })
     if (mode === 'note') await api.post('/notes', { title: val, content: '' })
-    setVal(''); setSaving(false); onDone()
+    setVal('')
+    setSaving(false)
+    onDone()
   }
+
   return (
     <NmCard style={{ padding: '14px 16px', opacity: disabled ? 0.5 : 1, transition: 'opacity 0.2s' }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
@@ -165,37 +187,120 @@ function QuickCapture({ onDone, disabled }) {
   )
 }
 
+// ── Finance summary card ──
+function FinanceCard({ finance, loading, onClick }) {
+  const balance = finance?.balance ?? null
+  const expense = finance?.expense_today ?? null
+
+  return (
+    <NmCard onClick={onClick} style={{ padding: '16px 14px', gridColumn: 'span 2' }}>
+      <div style={{
+        fontFamily: 'var(--nm-mono)', fontSize: '9px',
+        color: 'var(--nm-dim)', letterSpacing: '0.12em',
+        textTransform: 'uppercase', marginBottom: '10px',
+      }}>▸ finance</div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        {/* Balance */}
+        <div>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '8px',
+            color: 'var(--nm-dim)', letterSpacing: '0.1em',
+            textTransform: 'uppercase', marginBottom: '4px',
+          }}>balance</div>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '20px', fontWeight: 500,
+            color: balance !== null && balance < 0 ? 'var(--nm-danger)' : 'var(--nm-success)',
+            lineHeight: 1,
+          }}>
+            {loading ? '—' : balance !== null ? `฿${balance.toLocaleString()}` : '—'}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          width: '1px', height: '32px',
+          background: 'var(--nm-bg)',
+          boxShadow: 'var(--nm-inset-sm)',
+          borderRadius: '1px',
+          margin: '0 12px',
+        }} />
+
+        {/* Today's expense */}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '8px',
+            color: 'var(--nm-dim)', letterSpacing: '0.1em',
+            textTransform: 'uppercase', marginBottom: '4px',
+          }}>today</div>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '20px', fontWeight: 500,
+            color: 'var(--nm-accent2)', lineHeight: 1,
+          }}>
+            {loading ? '—' : expense !== null ? `฿${expense.toLocaleString()}` : '฿0'}
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <div style={{
+          marginLeft: 'auto',
+          paddingLeft: '12px',
+          fontFamily: 'var(--nm-mono)', fontSize: '14px',
+          color: 'var(--nm-dim)',
+        }}>→</div>
+      </div>
+    </NmCard>
+  )
+}
+
 export default function Dashboard() {
   const [brief, setBrief] = useState(null)
   const [briefLoading, setBriefLoading] = useState(true)
-  const [data, setData] = useState({ notes:0, tasks:0, links:0, todayTasks:[], habits:[], habitLogs:[] })
+  const [briefError, setBriefError] = useState(false)
+  const [data, setData] = useState({
+    notes: 0, tasks: 0, links: 0,
+    todayTasks: [],
+    finance: null,
+  })
   const [loading, setLoading] = useState(true)
   const nav = useNavigate()
   const cd = useCountdown(AWS_EXPIRE)
   const clock = useClock()
 
   const loadBrief = async () => {
-    try { const r = await api.get('/brief'); setBrief(r.data) } catch {}
+    setBriefLoading(true)
+    setBriefError(false)
+    try {
+      const r = await api.get('/brief')
+      setBrief(r.data)
+    } catch {
+      setBriefError(true)
+    }
     setBriefLoading(false)
   }
 
   const load = useCallback(async () => {
     const today = todayStr()
-    const [year, month] = today.split('-')
-    const [n, t, l, h, hl] = await Promise.all([
-      api.get('/notes').then(r => r.data),
-      api.get('/tasks').then(r => r.data),
-      api.get('/links').then(r => r.data),
-      api.get('/habits').then(r => r.data),
-      api.get(`/habits/logs?year=${year}&month=${month}`).then(r => r.data).catch(() => []),
-    ])
-    const pending = t.filter(x => x.status !== 'done')
-    const overdue = pending.filter(x => x.due_date && x.due_date < today)
-    const dueToday = pending.filter(x => x.due_date === today)
-    const todayTasks = [...overdue, ...dueToday].slice(0, 3)
-    const fallback = todayTasks.length === 0 ? pending.slice(0, 3) : todayTasks
-    const todayLogs = hl.filter(l => l.date === today)
-    setData({ notes:n.length, tasks:pending.length, links:l.length, todayTasks:fallback, habits:h, habitLogs:todayLogs })
+    try {
+      const [n, t, l, fin] = await Promise.all([
+        api.get('/notes').then(r => r.data),
+        api.get('/tasks').then(r => r.data),
+        api.get('/links').then(r => r.data),
+        api.get('/finance/summary').then(r => r.data).catch(() => null),
+      ])
+      const pending = t.filter(x => x.status !== 'done')
+      const overdue = pending.filter(x => x.due_date && x.due_date < today)
+      const dueToday = pending.filter(x => x.due_date === today)
+      const todayTasks = [...overdue, ...dueToday].slice(0, 3)
+      const fallback = todayTasks.length === 0 ? pending.slice(0, 3) : todayTasks
+      setData({
+        notes: n.length,
+        tasks: pending.length,
+        links: l.length,
+        todayTasks: fallback,
+        finance: fin,
+      })
+    } catch {}
     setLoading(false)
   }, [])
 
@@ -206,88 +311,177 @@ export default function Dashboard() {
   const urgency = cd.days < 30 ? 'var(--nm-danger)' : cd.days < 60 ? 'var(--nm-warn)' : 'var(--nm-dim)'
   const pct = Math.max(0, Math.min(100, (cd.days / 365) * 100))
 
-  const toggleHabit = async (habit) => {
-    const done = data.habitLogs.some(l => l.habit_id === habit.id)
-    if (done) return
-    await api.post(`/habits/${habit.id}/log`, { date: todayStr() })
-    load()
-  }
-
   return (
     <div
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      style={{ padding: '0 16px 80px', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '100vh' }}
+      style={{
+        padding: '0 16px 80px',
+        maxWidth: '600px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+        minHeight: '100vh',
+      }}
     >
       <PullIndicator pullY={pullY} refreshing={refreshing} />
 
-      <div style={{ paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 2px 0' }} className="fade-up">
+      {/* ── Header ── */}
+      <div
+        className="fade-up"
+        style={{
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'flex-start', padding: '20px 2px 0',
+        }}
+      >
         <div>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>{GREET()}</div>
-          <h1 style={{ fontFamily: 'var(--nm-font)', fontSize: '28px', fontWeight: 900, color: 'var(--nm-text)', letterSpacing: '-0.02em', margin: 0 }}>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '9px',
+            color: 'var(--nm-dim)', letterSpacing: '0.12em',
+            textTransform: 'uppercase', marginBottom: '4px',
+          }}>{GREET()}</div>
+          <h1 style={{
+            fontFamily: 'var(--nm-font)', fontSize: '28px',
+            fontWeight: 900, color: 'var(--nm-text)',
+            letterSpacing: '-0.02em', margin: 0,
+          }}>
             Overview<span style={{ color: 'var(--nm-accent)' }}>.</span>
           </h1>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '24px', fontWeight: 500, color: 'var(--nm-text)', lineHeight: 1 }}>{clock}</div>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.1em', marginTop: '4px' }}>{todayStr()}</div>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '24px',
+            fontWeight: 500, color: 'var(--nm-text)', lineHeight: 1,
+          }}>{clock}</div>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '9px',
+            color: 'var(--nm-dim)', letterSpacing: '0.1em', marginTop: '4px',
+          }}>{todayStr()}</div>
         </div>
       </div>
 
-      <div className="fade-up fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+      {/* ── Stats grid: Notes | Tasks | Links + Finance ── */}
+      <div
+        className="fade-up fade-up-1"
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}
+      >
         {[
-          { label: 'Notes',  value: data.notes, color: 'var(--nm-accent)',  path: '/notes' },
-          { label: 'Tasks',  value: data.tasks, color: 'var(--nm-accent2)', path: '/tasks' },
-          { label: 'Links',  value: data.links, color: 'var(--nm-warn)',    path: '/links' },
+          { label: 'Notes', value: data.notes, color: 'var(--nm-accent)',  path: '/notes' },
+          { label: 'Tasks', value: data.tasks, color: 'var(--nm-accent2)', path: '/tasks' },
+          { label: 'Links', value: data.links, color: 'var(--nm-warn)',    path: '/links' },
         ].map(s => (
           <NmCard key={s.label} onClick={() => nav(s.path)} style={{ padding: '16px 14px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '30px', fontWeight: 500, color: s.color, lineHeight: 1, marginBottom: '6px' }}>
+            <div style={{
+              fontFamily: 'var(--nm-mono)', fontSize: '30px',
+              fontWeight: 500, color: s.color, lineHeight: 1, marginBottom: '6px',
+            }}>
               {loading ? '—' : String(s.value).padStart(2, '0')}
             </div>
-            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{s.label}</div>
+            <div style={{
+              fontFamily: 'var(--nm-mono)', fontSize: '9px',
+              color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase',
+            }}>{s.label}</div>
           </NmCard>
         ))}
+
+        {/* Finance spans full width below */}
+        <FinanceCard
+          finance={data.finance}
+          loading={loading}
+          onClick={() => nav('/finance')}
+        />
       </div>
 
+      {/* ── AWS Countdown ── */}
       <NmCard className="fade-up fade-up-2" style={{ padding: '14px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>AWS credit · Aug 21, 2026</div>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', marginBottom: '10px',
+        }}>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '9px',
+            color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase',
+          }}>AWS credit · Aug 21, 2026</div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            {[['d',cd.days],['h',cd.hours],['m',cd.mins],['s',cd.secs]].map(([l,v]) => (
-              <span key={l} style={{ fontFamily: 'var(--nm-mono)', fontSize: '13px', fontWeight: 500, color: urgency }}>
-                {String(v).padStart(2,'0')}<span style={{ fontSize: '9px', color: 'var(--nm-dim)', marginLeft: '2px' }}>{l}</span>
+            {[['d', cd.days], ['h', cd.hours], ['m', cd.mins], ['s', cd.secs]].map(([l, v]) => (
+              <span key={l} style={{
+                fontFamily: 'var(--nm-mono)', fontSize: '13px',
+                fontWeight: 500, color: urgency,
+              }}>
+                {String(v).padStart(2, '0')}
+                <span style={{ fontSize: '9px', color: 'var(--nm-dim)', marginLeft: '2px' }}>{l}</span>
               </span>
             ))}
           </div>
         </div>
-        <div style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '50px', height: '8px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${urgency}88, ${urgency})`, borderRadius: '50px', transition: 'width 1s ease' }} />
+        <div style={{
+          background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)',
+          borderRadius: '50px', height: '8px', overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%', width: `${pct}%`,
+            background: `linear-gradient(90deg, ${urgency}88, ${urgency})`,
+            borderRadius: '50px', transition: 'width 1s ease',
+          }} />
         </div>
       </NmCard>
 
+      {/* ── Today's Tasks ── */}
       <div className="fade-up fade-up-3">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>▸ today's tasks</div>
-          <span onClick={() => nav('/tasks')} style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-accent)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>all →</span>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', marginBottom: '8px',
+        }}>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '9px',
+            color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase',
+          }}>▸ today's tasks</div>
+          <span
+            onClick={() => nav('/tasks')}
+            style={{
+              fontFamily: 'var(--nm-mono)', fontSize: '9px',
+              color: 'var(--nm-accent)', letterSpacing: '0.12em',
+              textTransform: 'uppercase', cursor: 'pointer',
+            }}
+          >all →</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {data.todayTasks.length === 0 && !loading && (
-            <NmCard style={{ textAlign: 'center', color: 'var(--nm-dim)', fontSize: '13px', padding: '16px', fontWeight: 600 }}>all clear ✓</NmCard>
+            <NmCard style={{
+              textAlign: 'center', color: 'var(--nm-dim)',
+              fontSize: '13px', padding: '16px', fontWeight: 600,
+            }}>all clear ✓</NmCard>
           )}
           {data.todayTasks.map(t => {
             const overdue = t.due_date && t.due_date < todayStr()
-            const dotColor = overdue ? 'var(--nm-danger)' : t.priority==='high' ? 'var(--nm-danger)' : t.priority==='medium' ? 'var(--nm-warn)' : 'var(--nm-dim)'
+            const dotColor = overdue || t.priority === 'high'
+              ? 'var(--nm-danger)'
+              : t.priority === 'medium'
+                ? 'var(--nm-warn)'
+                : 'var(--nm-dim)'
             return (
-              <NmCard key={t.id} style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <NmCard
+                key={t.id}
+                onClick={() => nav('/tasks')}
+                style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}
+              >
                 <div style={{
                   width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
                   background: 'var(--nm-bg)',
                   boxShadow: `2px 2px 5px var(--nm-shadow-d), -2px -2px 5px var(--nm-shadow-l), inset 0 0 0 3px ${dotColor}`,
                 }} />
-                <span style={{ flex: 1, fontSize: '13px', color: 'var(--nm-text)', fontWeight: 600, overflowWrap: 'anywhere' }}>{t.title}</span>
+                <span style={{
+                  flex: 1, fontSize: '13px',
+                  color: 'var(--nm-text)', fontWeight: 600, overflowWrap: 'anywhere',
+                }}>{t.title}</span>
                 {overdue && (
-                  <span style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '50px', fontSize: '8px', fontFamily: 'var(--nm-mono)', color: 'var(--nm-danger)', padding: '3px 8px', letterSpacing: '0.08em' }}>overdue</span>
+                  <span style={{
+                    background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)',
+                    borderRadius: '50px', fontSize: '8px',
+                    fontFamily: 'var(--nm-mono)', color: 'var(--nm-danger)',
+                    padding: '3px 8px', letterSpacing: '0.08em', flexShrink: 0,
+                  }}>overdue</span>
                 )}
               </NmCard>
             )
@@ -295,54 +489,73 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {data.habits.length > 0 && (
-        <div className="fade-up fade-up-4">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>▸ habits today</div>
-            <span onClick={() => nav('/habits')} style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-accent)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>all →</span>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {data.habits.map(h => {
-              const done = data.habitLogs.some(l => l.habit_id === h.id)
-              return (
-                <button key={h.id} onClick={() => toggleHabit(h)} style={{
-                  background: 'var(--nm-bg)',
-                  boxShadow: done ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
-                  border: 'none', borderRadius: '50px',
-                  padding: '7px 16px', cursor: done ? 'default' : 'pointer',
-                  fontSize: '12px', fontFamily: 'var(--nm-font)', fontWeight: 700,
-                  color: done ? h.color : 'var(--nm-dim)',
-                  transition: 'all 0.25s ease',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}>
-                  <span style={{ fontSize: '13px' }}>{done ? '✓' : '○'}</span>
-                  <span>{h.name}</span>
-                </button>
-              )
-            })}
-          </div>
+      {/* ── Daily Brief ── */}
+      <NmCard
+        className="fade-up fade-up-4"
+        style={{ padding: '16px 18px', borderLeft: '3px solid var(--nm-accent)' }}
+      >
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', marginBottom: '10px',
+        }}>
+          <div style={{
+            fontFamily: 'var(--nm-mono)', fontSize: '9px',
+            color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase',
+          }}>✦ daily brief</div>
+          <button
+            onClick={loadBrief}
+            disabled={briefLoading}
+            style={{
+              background: 'var(--nm-bg)',
+              boxShadow: briefLoading ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
+              border: 'none', borderRadius: '50%',
+              width: '28px', height: '28px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: briefLoading ? 'default' : 'pointer',
+              fontFamily: 'var(--nm-mono)', fontSize: '13px',
+              color: 'var(--nm-accent)',
+              transition: 'box-shadow 0.15s, transform 0.3s',
+              transform: briefLoading ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          >↺</button>
         </div>
-      )}
 
-      <NmCard className="fade-up fade-up-5" style={{ padding: '16px 18px', borderLeft: '3px solid var(--nm-accent)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>✦ daily brief</div>
-          <span onClick={loadBrief} style={{ fontFamily: 'var(--nm-mono)', fontSize: '14px', color: 'var(--nm-accent)', cursor: 'pointer' }}>{briefLoading ? '·' : '↺'}</span>
-        </div>
         {briefLoading ? (
-          <div style={{ background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)', borderRadius: '8px', height: '40px', animation: 'nmPulse 1.5s infinite' }} />
+          <div style={{
+            background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)',
+            borderRadius: '8px', height: '40px', animation: 'nmPulse 1.5s infinite',
+          }} />
+        ) : briefError ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            background: 'var(--nm-bg)', boxShadow: 'var(--nm-inset-sm)',
+            borderRadius: '10px', padding: '10px 14px',
+          }}>
+            <span style={{ fontSize: '16px' }}>✕</span>
+            <span style={{
+              fontFamily: 'var(--nm-mono)', fontSize: '11px',
+              color: 'var(--nm-dim)', letterSpacing: '0.05em',
+            }}>ไม่สามารถสร้าง brief ได้</span>
+          </div>
         ) : (
-          <p style={{ margin: 0, fontSize: '13px', color: 'var(--nm-text)', lineHeight: 1.7, fontStyle: 'italic', fontWeight: 600 }}>
+          <p style={{
+            margin: 0, fontSize: '13px', color: 'var(--nm-text)',
+            lineHeight: 1.7, fontStyle: 'italic', fontWeight: 600,
+          }}>
             {brief?.brief ?? 'ไม่มีข้อมูลเพียงพอ'}
           </p>
         )}
       </NmCard>
 
-      <div className="fade-up fade-up-6">
-        <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>▸ capture</div>
+      {/* ── Quick Capture ── */}
+      <div className="fade-up fade-up-5">
+        <div style={{
+          fontFamily: 'var(--nm-mono)', fontSize: '9px',
+          color: 'var(--nm-dim)', letterSpacing: '0.12em',
+          textTransform: 'uppercase', marginBottom: '8px',
+        }}>▸ capture</div>
         <QuickCapture onDone={load} disabled={refreshing} />
       </div>
-
     </div>
   )
 }
