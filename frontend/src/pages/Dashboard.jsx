@@ -443,7 +443,7 @@ export default function Dashboard() {
         api.get('/links').then(r => r.data),
         api.get('/finance/summary').then(r => r.data).catch(() => null),
         api.get('/habits').then(r => r.data).catch(() => []),
-        api.get('/habits/logs').then(r => r.data).catch(() => []),
+        api.get('/habits/logs?year=' + new Date().getFullYear() + '&month=' + (new Date().getMonth()+1)).then(r => r.data).catch(() => []),
       ])
       const pending   = t.filter(x => x.status !== 'done')
       const overdue   = pending.filter(x => x.due_date && x.due_date < today)
@@ -464,9 +464,9 @@ export default function Dashboard() {
   const toggleHabit = async (habitId, done) => {
     try {
       if (done) {
-        await api.delete(`/habits/${habitId}/logs/${todayStr()}`)
+        await api.post(`/habits/${habitId}/log`, { date: todayStr() })
       } else {
-        await api.post(`/habits/${habitId}/logs`, { date: todayStr() })
+        await api.post(`/habits/${habitId}/log`, { date: todayStr() })
       }
       load()
     } catch {}
