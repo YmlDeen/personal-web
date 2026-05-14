@@ -24,11 +24,8 @@ const NAV_SIDEBAR = [
   { to: '/',        label: 'Dashboard', icon: '⌂', end: true },
   { to: '/tasks',   label: 'Tasks',     icon: '◉' },
   { to: '/notes',   label: 'Notes',     icon: '◈' },
-  { to: '/habits',  label: 'Habits',    icon: '◆' },
-  { to: '/journal', label: 'Journal',   icon: '◇' },
   { to: '/finance', label: 'Finance',   icon: '◫' },
   { to: '/links',   label: 'Links',     icon: '◎' },
-  { to: '/logs',    label: 'Logs',      icon: '◌' },
 ]
 
 const NAV_TABS = [
@@ -53,13 +50,9 @@ function BottomTabBar({ onSearch }) {
   const logout = useAuth(s => s.logout)
   const { dark, toggle } = useContext(ThemeContext)
   const navigate = useNavigate()
-  const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
 
   const MORE_ITEMS = [
-    { to: '/habits',  label: 'Habits',  icon: '◆' },
-    { to: '/journal', label: 'Journal', icon: '◇' },
-    { to: '/logs',    label: 'Logs',    icon: '◌' },
     { label: 'Search', icon: '⌕', action: () => { setMoreOpen(false); onSearch() } },
     { label: dark ? 'Light' : 'Dark', icon: dark ? '☀' : '☽', action: () => { setMoreOpen(false); setTimeout(() => toggle(), 50) } },
     { label: 'Logout', icon: '⏻', danger: true, action: () => { setMoreOpen(false); logout() } },
@@ -79,7 +72,6 @@ function BottomTabBar({ onSearch }) {
         />
       )}
 
-      {/* drawer ชิด tab bar */}
       <div style={{
         position: 'fixed',
         bottom: '64px',
@@ -98,7 +90,6 @@ function BottomTabBar({ onSearch }) {
         borderRadius: '18px',
         minWidth: '155px',
       }}>
-        {/* หัวลูกศรชี้ลง ชิดปุ่ม More */}
         <div style={{
           position: 'absolute',
           bottom: '-7px',
