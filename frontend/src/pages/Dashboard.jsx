@@ -538,12 +538,12 @@ export default function Dashboard() {
             }}>ไม่สามารถสร้าง brief ได้</span>
           </div>
         ) : (
-          <p style={{
+          <div style={{
             margin: 0, fontSize: '13px', color: 'var(--nm-text)',
             lineHeight: 1.7, fontFamily: 'var(--nm-mono)', fontStyle: 'normal', fontWeight: 400,
           }}>
             {(brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").split("\n").map((line, i) => <span key={i} style={{display:"block"}}>{line}</span>)}
-          </p>
+          </div>
         )}
       </NmCard>
 
