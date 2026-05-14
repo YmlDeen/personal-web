@@ -63,7 +63,7 @@ export default function Login() {
             letterSpacing: '-0.03em',
             lineHeight: 1,
           }}>
-            Ym//<span style={{ color: 'var(--accent)' }}>ee</span>N
+            ym//<span style={{ color: 'var(--accent)' }}>ee</span>n
           </div>
           <div style={{ fontSize: '11px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '6px' }}>
             offline-first · personal os
