@@ -53,6 +53,7 @@ function BottomTabBar({ onSearch }) {
   const [moreOpen, setMoreOpen] = useState(false)
 
   const MORE_ITEMS = [
+    { label: 'Habits', icon: '◈', action: () => { setMoreOpen(false); navigate('/habits') } },
     { label: 'Search', icon: '⌕', action: () => { setMoreOpen(false); onSearch() } },
     { label: dark ? 'Light' : 'Dark', icon: dark ? '☀' : '☽', action: () => { setMoreOpen(false); setTimeout(() => toggle(), 50) } },
     { label: 'Logout', icon: '⏻', danger: true, action: () => { setMoreOpen(false); logout() } },
