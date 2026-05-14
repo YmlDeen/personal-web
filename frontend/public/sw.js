@@ -1,4 +1,4 @@
-const CACHE = 'yml-v1'
+const CACHE = 'ymleen-v2'
 const STATIC = ['/','index.html']
 
 self.addEventListener('install', e => {
