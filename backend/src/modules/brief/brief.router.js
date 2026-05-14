@@ -50,8 +50,7 @@ TASKS
 FINANCE · {เดือน ปี}
   └─ Balance ฿{balance}  ·  Today ฿{today_expense}
 
-HABITS  {progress bar ใช้ ■ และ ░ ตาม done/total}  {done}/{total}
-{habits ที่ยังไม่ได้ทำ ขึ้นบรรทัดใหม่ format:   └─ ○ habitname}
+
 
 ─────────────────────────────
 ▸ {2-3 ประโยค วิเคราะห์ตรงๆ บอกสิ่งที่ต้องทำ NOW และให้กำลังใจ 1 อย่าง ห้ามใช้ bullet}
