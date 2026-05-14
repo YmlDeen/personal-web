@@ -11,12 +11,6 @@ err()  { echo -e "${RED}✗${NC} $1"; exit 1; }
 
 MODE="${1:-all}"
 
-build_frontend() {
-  info "building frontend..."
-  cd "$PROJECT/frontend" && npm run build --silent || err "build failed"
-  ok "build done"
-}
-
 commit_git() {
   cd "$PROJECT"
   if [[ -n $(git status --porcelain) ]]; then
@@ -33,6 +27,12 @@ pull_vps() {
   ok "VPS synced"
 }
 
+build_frontend_vps() {
+  info "building frontend on VPS..."
+  $SSH_CMD "$VPS" "cd ~/projects/personal-web/frontend && npm install --silent && npm run build --silent && cp -r dist ~/projects/personal-web/dist" || err "build failed"
+  ok "build done"
+}
+
 restart_vps() {
   info "restarting service..."
   $SSH_CMD "$VPS" "sudo systemctl restart personal-web && sleep 2 && curl -s http://localhost:3011/health"
@@ -44,8 +44,8 @@ echo "  personal-web deploy [$MODE]"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 case "$MODE" in
-  frontend) build_frontend; commit_git; pull_vps; restart_vps ;;
+  frontend) commit_git; pull_vps; build_frontend_vps; restart_vps ;;
   backend)  commit_git; pull_vps; restart_vps ;;
-  all)      build_frontend; commit_git; pull_vps; restart_vps ;;
+  all)      commit_git; pull_vps; build_frontend_vps; restart_vps ;;
   *)        err "usage: ./deploy.sh [frontend|backend|all]" ;;
 esac
