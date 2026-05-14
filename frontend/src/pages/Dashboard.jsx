@@ -540,7 +540,7 @@ export default function Dashboard() {
         ) : (
           <p style={{
             margin: 0, fontSize: '13px', color: 'var(--nm-text)',
-            lineHeight: 1.7, fontStyle: 'italic', fontWeight: 600,
+            lineHeight: 1.7, fontFamily: 'var(--nm-mono)', fontStyle: 'normal', fontWeight: 400,
           }}>
             {(brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").split("\n").map((line, i) => <span key={i} style={{display:"block"}}>{line}</span>)}
           </p>
