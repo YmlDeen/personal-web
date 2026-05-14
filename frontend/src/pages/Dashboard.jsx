@@ -86,7 +86,7 @@ function useWeather() {
         )
         const d = await r.json()
         setWeather(d.current)
-      } catch {}
+      } catch(e) { setDbgErr(e.message) }
     }, () => {
       // fallback Bangkok
       fetch('https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.52&current=temperature_2m,weathercode,windspeed_10m&timezone=auto')
@@ -405,6 +405,7 @@ export default function Dashboard() {
     recentNotes: [], habits: [], habitLogs: [],
   })
   const [loading, setLoading] = useState(true)
+  const [dbgErr, setDbgErr] = useState("")
   const nav     = useNavigate()
   const cd      = useCountdown(AWS_EXPIRE)
   const clock   = useClock()
