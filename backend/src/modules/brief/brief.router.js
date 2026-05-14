@@ -65,8 +65,8 @@ HABITS  {progress bar ใช้ ■ และ ░ ตาม done/total}  {done}/
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        max_tokens: 400,
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 250,
         messages: [{ role: 'user', content: prompt }]
       })
     })
