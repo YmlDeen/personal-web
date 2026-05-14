@@ -37,9 +37,24 @@ router.get('/', async (req, res) => {
       recentNotes: notes
     }
 
-    const prompt = `คุณคือ personal intelligence assistant ของผู้ใช้คนนี้ วิเคราะห์ข้อมูลชีวิตด้านล่างแล้วเขียน daily brief เป็นภาษาไทย
+    const prompt = `คุณคือ personal intelligence assistant เขียน daily brief เป็นภาษาไทย
 
-กฎ: ไม่เกิน 3 ประโยค ไม่ใช้ bullet point พูดตรงๆ เหมือนเพื่อนฉลาดที่รู้จักเราดี บอกสิ่งที่ต้องทำ NOW และให้กำลังใจ 1 อย่าง
+ใช้ format นี้เป๊ะๆ:
+
+✦ DAILY BRIEF · {DATE}
+─────────────────────────────
+
+TASKS
+{แต่ละ task ขึ้นบรรทัดใหม่ format: ├─ ⚠ title [OVERDUE] หรือ └─ ○ title [PENDING]}
+
+FINANCE · {เดือน ปี}
+  └─ Balance ฿{balance}  ·  Today ฿{today_expense}
+
+HABITS  {progress bar ใช้ ■ และ ░ ตาม done/total}  {done}/{total}
+{habits ที่ยังไม่ได้ทำ ขึ้นบรรทัดใหม่ format:   └─ ○ habitname}
+
+─────────────────────────────
+▸ {2-3 ประโยค วิเคราะห์ตรงๆ บอกสิ่งที่ต้องทำ NOW และให้กำลังใจ 1 อย่าง ห้ามใช้ bullet}
 
 ข้อมูล: ${JSON.stringify(snapshot)}`
 
@@ -51,7 +66,7 @@ router.get('/', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
-        max_tokens: 300,
+        max_tokens: 400,
         messages: [{ role: 'user', content: prompt }]
       })
     })
