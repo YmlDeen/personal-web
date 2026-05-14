@@ -109,7 +109,7 @@ export default function Habits() {
           return s
         })()
         return (
-          <div key={h.id} className="fade-up card" style={{ marginBottom: '12px', padding: '16px', animationDelay: `${hi * 0.05}s` }}>
+          <div key={h.id} className="fade-up nm-card" style={{ marginBottom: '12px', padding: '16px', animationDelay: `${hi * 0.05}s` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: h.color, flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: '13px', color: 'var(--text)' }}>{h.name}</span>

@@ -71,7 +71,7 @@ export default function Login() {
         </div>
 
         {/* form */}
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="nm-card" style={{ padding: '24px' }}>
           <div style={{ fontSize: '10px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>
             ▸ authenticate
           </div>
@@ -102,7 +102,7 @@ export default function Login() {
             )}
 
             <button
-              className="btn btn-primary"
+              className="nm-btn-primary"
               onClick={submit}
               disabled={loading}
               style={{ marginTop: '4px', opacity: loading ? 0.6 : 1 }}

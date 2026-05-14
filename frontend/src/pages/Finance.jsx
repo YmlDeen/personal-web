@@ -92,7 +92,7 @@ export default function Finance() {
         ))}
       </div>
 
-      <div className="fade-up fade-up-3 card" style={{ padding: '16px', marginBottom: '24px' }}>
+      <div className="fade-up fade-up-3 nm-card" style={{ padding: '16px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           {['expense','income'].map(t => (
             <button key={t} onClick={() => setType(t)} className="nm-btn" style={{
