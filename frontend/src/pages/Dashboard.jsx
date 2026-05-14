@@ -542,7 +542,9 @@ export default function Dashboard() {
             margin: 0, fontSize: '13px', color: 'var(--nm-text)',
             lineHeight: 1.7, fontFamily: 'var(--nm-mono)', fontStyle: 'normal', fontWeight: 400,
           }}>
-            {(brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").split("\n").map((line, i) => <span key={i} style={{display:"block"}}>{line}</span>)}
+            {(brief?.brief ?? "ไม่มีข้อมูลเพียงพอ").replace(/\\n/g, "
+").split("
+").map((line, i) => <span key={i} style={{display:"block"}}>{line}</span>)}
           </div>
         )}
       </NmCard>
