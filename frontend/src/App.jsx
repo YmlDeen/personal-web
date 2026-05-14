@@ -236,7 +236,7 @@ function Sidebar({ onSearch }) {
           ym//<span style={{ color: 'var(--nm-accent)' }}>een</span>
         </div>
         <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>
-          personal os
+          Ym//eeN
         </div>
       </div>
       <div style={{ padding: '12px 16px 8px' }}>
