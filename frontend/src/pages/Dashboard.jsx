@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/client'
 
@@ -18,6 +18,72 @@ function useClock() {
   const [t, setT] = useState(timeStr())
   useEffect(() => { const id = setInterval(() => setT(timeStr()), 1000); return () => clearInterval(id) }, [])
   return t
+}
+
+function usePullToRefresh(onRefresh) {
+  const startY = useRef(0)
+  const pulling = useRef(false)
+  const [pullY, setPullY] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const THRESHOLD = 72
+
+  const onTouchStart = useCallback((e) => {
+    if (window.scrollY > 0) return
+    startY.current = e.touches[0].clientY
+    pulling.current = true
+  }, [])
+
+  const onTouchMove = useCallback((e) => {
+    if (!pulling.current || refreshing) return
+    const dy = e.touches[0].clientY - startY.current
+    if (dy < 0) return
+    setPullY(Math.min(dy * 0.45, THRESHOLD + 20))
+  }, [refreshing])
+
+  const onTouchEnd = useCallback(async () => {
+    if (!pulling.current) return
+    pulling.current = false
+    if (pullY >= THRESHOLD) {
+      setRefreshing(true)
+      setPullY(THRESHOLD)
+      await onRefresh()
+      setRefreshing(false)
+    }
+    setPullY(0)
+  }, [pullY, onRefresh])
+
+  return { pullY, refreshing, onTouchStart, onTouchMove, onTouchEnd }
+}
+
+function PullIndicator({ pullY, refreshing, threshold = 72 }) {
+  const pct = Math.min(pullY / threshold, 1)
+  const ready = pullY >= threshold
+  return (
+    <div style={{
+      height: `${pullY}px`,
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: refreshing ? 'height 0.2s ease' : 'none',
+    }}>
+      <div style={{
+        width: '36px', height: '36px',
+        background: 'var(--nm-bg)',
+        boxShadow: ready ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
+        borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        opacity: pct,
+        transform: `scale(${0.6 + pct * 0.4}) rotate(${refreshing ? 0 : pullY * 3}deg)`,
+        transition: refreshing ? 'transform 0.1s linear' : 'none',
+        animation: refreshing ? 'nmSpin 0.8s linear infinite' : 'none',
+        fontSize: '16px',
+        color: ready ? 'var(--nm-accent)' : 'var(--nm-dim)',
+      }}>
+        {refreshing ? '↻' : '↓'}
+      </div>
+    </div>
+  )
 }
 
 function NmCard({ children, style = {}, onClick, className = '' }) {
@@ -45,27 +111,27 @@ function NmCard({ children, style = {}, onClick, className = '' }) {
   )
 }
 
-function QuickCapture({ onDone }) {
+function QuickCapture({ onDone, disabled }) {
   const [mode, setMode] = useState('task')
   const [val, setVal] = useState('')
   const [saving, setSaving] = useState(false)
   const save = async () => {
-    if (!val.trim() || saving) return
+    if (!val.trim() || saving || disabled) return
     setSaving(true)
     if (mode === 'task') await api.post('/tasks', { title: val, priority: 'medium' })
     if (mode === 'note') await api.post('/notes', { title: val, content: '' })
     setVal(''); setSaving(false); onDone()
   }
   return (
-    <NmCard style={{ padding: '14px 16px' }}>
+    <NmCard style={{ padding: '14px 16px', opacity: disabled ? 0.5 : 1, transition: 'opacity 0.2s' }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         {['task', 'note'].map(m => (
-          <button key={m} onClick={() => setMode(m)} style={{
+          <button key={m} onClick={() => setMode(m)} disabled={disabled} style={{
             background: 'var(--nm-bg)',
             boxShadow: mode === m ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
             border: 'none', borderRadius: '50px',
             fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '5px 14px', cursor: 'pointer',
+            padding: '5px 14px', cursor: disabled ? 'default' : 'pointer',
             fontFamily: 'var(--nm-mono)', fontWeight: 700,
             color: mode === m ? 'var(--nm-accent)' : 'var(--nm-dim)',
             transition: 'all 0.2s',
@@ -84,8 +150,9 @@ function QuickCapture({ onDone }) {
           value={val}
           onChange={e => setVal(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && save()}
+          disabled={disabled}
         />
-        <button onClick={save} disabled={saving} style={{
+        <button onClick={save} disabled={saving || disabled} style={{
           width: '40px', height: '40px', background: 'var(--nm-bg)',
           boxShadow: saving ? 'var(--nm-inset-sm)' : 'var(--nm-raised-sm)',
           border: 'none', borderRadius: '50%', cursor: 'pointer',
@@ -112,7 +179,7 @@ export default function Dashboard() {
     setBriefLoading(false)
   }
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const today = todayStr()
     const [year, month] = today.split('-')
     const [n, t, l, h, hl] = await Promise.all([
@@ -130,7 +197,9 @@ export default function Dashboard() {
     const todayLogs = hl.filter(l => l.date === today)
     setData({ notes:n.length, tasks:pending.length, links:l.length, todayTasks:fallback, habits:h, habitLogs:todayLogs })
     setLoading(false)
-  }
+  }, [])
+
+  const { pullY, refreshing, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(load)
 
   useEffect(() => { load(); loadBrief() }, [])
 
@@ -145,9 +214,15 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ padding: '20px 16px 80px', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '100vh' }}>
+    <div
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ padding: '0 16px 80px', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '14px', minHeight: '100vh' }}
+    >
+      <PullIndicator pullY={pullY} refreshing={refreshing} />
 
-      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '4px 2px' }}>
+      <div style={{ paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 2px 0' }} className="fade-up">
         <div>
           <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>{GREET()}</div>
           <h1 style={{ fontFamily: 'var(--nm-font)', fontSize: '28px', fontWeight: 900, color: 'var(--nm-text)', letterSpacing: '-0.02em', margin: 0 }}>
@@ -265,7 +340,7 @@ export default function Dashboard() {
 
       <div className="fade-up fade-up-6">
         <div style={{ fontFamily: 'var(--nm-mono)', fontSize: '9px', color: 'var(--nm-dim)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>▸ capture</div>
-        <QuickCapture onDone={load} />
+        <QuickCapture onDone={load} disabled={refreshing} />
       </div>
 
     </div>
