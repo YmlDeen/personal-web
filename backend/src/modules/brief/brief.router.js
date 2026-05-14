@@ -20,16 +20,13 @@ router.get('/', async (req, res) => {
     const tasks = q(`SELECT title, priority, due_date FROM tasks WHERE user_id = ${userId} AND status != 'done'`)
     const overdue = tasks.filter(t => t.due_date && t.due_date < today)
     const dueToday = tasks.filter(t => t.due_date === today)
-
     const habits = q(`SELECT id, name FROM habits WHERE user_id = ${userId}`)
     const habitLogs = q(`SELECT habit_id FROM habit_logs WHERE user_id = ${userId} AND date = '${today}'`)
     const doneIds = new Set(habitLogs.map(l => l.habit_id))
     const missedHabits = habits.filter(h => !doneIds.has(h.id)).map(h => h.name)
-
     const finance = q(`SELECT type, amount FROM finance WHERE user_id = ${userId} AND substr(date,1,7) = '${yearMonth}'`)
     const income = finance.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0)
     const expense = finance.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0)
-
     const notes = q(`SELECT title FROM notes WHERE user_id = ${userId} ORDER BY updated_at DESC LIMIT 5`).map(n => n.title)
 
     const snapshot = {
@@ -46,17 +43,21 @@ router.get('/', async (req, res) => {
 
 ข้อมูล: ${JSON.stringify(snapshot)}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 300 }
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
       })
     })
 
     const aiData = await response.json()
-    const brief = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? 'ไม่สามารถสร้าง brief ได้'
+    const brief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
 
     res.json({ brief, snapshot, generated_at: new Date().toISOString() })
   } catch (err) {
