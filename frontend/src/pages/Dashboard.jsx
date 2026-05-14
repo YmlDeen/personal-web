@@ -488,6 +488,7 @@ export default function Dashboard() {
       style={{ padding: '0 16px 80px', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 12, minHeight: '100vh' }}
     >
       <PullIndicator pullY={pullY} refreshing={refreshing} />
+      {!loading && <div style={{fontFamily:"monospace",fontSize:"10px",color:"red",padding:"4px 16px"}}>h:{data.habits.length} n:{data.recentNotes.length} l:{data.links}</div>}
 
       {/* ── Header ── */}
       <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 2px 0' }}>
