@@ -63,10 +63,10 @@ export default function Login() {
             letterSpacing: '-0.03em',
             lineHeight: 1,
           }}>
-            yml<span style={{ color: 'var(--accent)' }}>.</span>space
+            Ym//<span style={{ color: 'var(--accent)' }}>ee</span>N
           </div>
           <div style={{ fontSize: '11px', color: 'var(--dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '6px' }}>
-            personal operating system
+            offline-first · personal os
           </div>
         </div>
 
