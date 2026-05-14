@@ -71,7 +71,7 @@ FINANCE · {เดือน ปี}
     })
 
     const aiData = await response.json()
-    const brief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
+    const rawBrief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
 
     res.json({ brief, snapshot, generated_at: new Date().toISOString() })
   } catch (err) {
