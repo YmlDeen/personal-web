@@ -474,7 +474,7 @@ export default function Dashboard() {
 
   const { pullY, refreshing, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(load)
 
-  useEffect(() => { load(); loadBrief() }, [])
+  useEffect(() => { load(); loadBrief() }, [load])
 
   const urgency = cd.days < 30 ? 'var(--nm-danger)' : cd.days < 60 ? 'var(--nm-warn)' : 'var(--nm-dim)'
   const pct     = Math.max(0, Math.min(100, (cd.days / 365) * 100))
