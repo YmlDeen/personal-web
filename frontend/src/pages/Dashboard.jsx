@@ -86,7 +86,7 @@ function useWeather() {
         )
         const d = await r.json()
         setWeather(d.current)
-      } catch(e) { setDbgErr(e.message) }
+      } catch {}
     }, () => {
       // fallback Bangkok
       fetch('https://api.open-meteo.com/v1/forecast?latitude=13.75&longitude=100.52&current=temperature_2m,weathercode,windspeed_10m&timezone=auto')
@@ -405,7 +405,6 @@ export default function Dashboard() {
     recentNotes: [], habits: [], habitLogs: [],
   })
   const [loading, setLoading] = useState(true)
-  const [dbgErr, setDbgErr] = useState("")
   const nav     = useNavigate()
   const cd      = useCountdown(AWS_EXPIRE)
   const clock   = useClock()
@@ -488,7 +487,6 @@ export default function Dashboard() {
       style={{ padding: '0 16px 80px', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: 12, minHeight: '100vh' }}
     >
       <PullIndicator pullY={pullY} refreshing={refreshing} />
-      {!loading && <div style={{fontFamily:"monospace",fontSize:"10px",color:"red",padding:"4px 16px"}}>h:{data.habits.length} n:{data.recentNotes.length} l:{data.links}</div>}
 
       {/* ── Header ── */}
       <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '20px 2px 0' }}>
