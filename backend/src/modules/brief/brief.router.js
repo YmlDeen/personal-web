@@ -73,7 +73,7 @@ FINANCE · {เดือน ปี}
     const aiData = await response.json()
     const rawBrief = aiData.choices?.[0]?.message?.content ?? 'ไม่สามารถสร้าง brief ได้'
 
-    res.json({ brief, snapshot, generated_at: new Date().toISOString() })
+    res.json({ brief: rawBrief, snapshot, generated_at: new Date().toISOString() })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
